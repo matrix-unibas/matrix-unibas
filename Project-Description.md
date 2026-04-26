@@ -1,6 +1,6 @@
 # Projectdescription: Matrix Server as a communication platform for the DMI
 
-## Zusammenfassung
+## summary
 
 The project aims to design, implement and deploy a production-ready, self-hosted Matrix Server as infrastructure for the DMI at the University of Basel. The system will be built on the Matrix open communication protocol and serve as a privacy-focused, in-house alternative to the current use of Discord, which is a proprietary, externally hosted platform with no integration into university identity management.
 
