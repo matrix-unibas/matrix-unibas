@@ -1,6 +1,6 @@
-# Projectdescription: Matrix Server as a communication platform for the DMI
+# Project description: Matrix Server as a communication platform for the DMI
 
-## summary
+## Summary
 
 The project aims to design, implement and deploy a production-ready, self-hosted Matrix Server as infrastructure for the DMI at the University of Basel. The system will be built on the Matrix open communication protocol and serve as a privacy-focused, in-house alternative to the current use of Discord, which is a proprietary, externally hosted platform with no integration into university identity management.
 
@@ -14,12 +14,13 @@ The system will include the following components, deployed as a Docker container
   - Note: The server could be used without this, but it allows us to preconfigure the client for users and make onboarding easier, while still giving them the opportunity to use their own Matrix client.
 - Nginx reverse proxy with TLS (either something like Let's Encrypt or maybe unibas has their own Certificate authority?)
 - Mautrix-discord (Bridge to discord to migrate / mirror)
-  - Note: Could just not do this one, but seems not that difficult to include
-- Integration to Switch-edu-id, so users can authenticate their account using existing credentials & our server never needs to authenticate itself
+  - Note: Technically optional, but we want to include it
+- Integration to Switch-edu-id, so users can authenticate their account using existing credentials & our server never needs to authenticate users itself
 
-**Optional Stretch goals:**
+**Optional / Stretch goals:**
 - Coturn (TURN/STUN server for voice & video calls)
 - Prometheus and Grafana for operational monitoring / alerting
+- Website / User guide
 
 ## Deliverables
 - Containerised deployment stack (Docker Compose)
