@@ -41,4 +41,10 @@ The system will include the following components, deployed as a Docker container
 - Access / Information about TLS certificates for HTTPS
 - OPTIONAL: Access to a unibas website to host the User guide
 
+# Feedback 
+
+Fragen:
+- Admin UI o.ä.
+- Punkte in Räume von Gruppen posten etc.
+- Datenschutz / Moderation
 
