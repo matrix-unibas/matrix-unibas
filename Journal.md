@@ -140,8 +140,11 @@ What we found on the server:
 - **SSH:** tunnels to localhost are allowed, so the admin UI via `ssh -L` will work.
 - "System restart required" is shown at login.
 
+Storage: created a 500 GB LV `sysvg/marvinlv` (ext4), mounted on `/MARVIN` via `/etc/fstab` (by UUID), ~470 GB free in the VG left unallocated. Created group `marvin` for shared access to `/MARVIN`.
+
 ## Next steps
 - Decide: Postgres in Docker or the ITS Postgres 18
-- Check ourselves (commands collected, see chat/doc): does ALIS overwrite own nginx sites / LVs / group changes, is 443 reachable from outside, Postgres collation + access from Docker
-- Clarify with ITS: storage (`/var` + data volume), cert for `matrix.dmi.unibas.ch`, nginx vhost on 443, docker group + SSH for everyone, reboot, Postgres backups off the VM
-- Then: clone, `.env`, `setup.sh`, first test deploy
+- Finish `/MARVIN`: add members to group `marvin`, `chgrp` + `chmod 2775`, move Docker data-root to `/MARVIN/docker`
+- Check ourselves (commands collected, see chat/doc): does ALIS overwrite own nginx sites / LVs / fstab / groups / `daemon.json`, is 443 reachable from outside, Postgres collation + access from Docker
+- Clarify with ITS: tell them about `marvinlv` on `/MARVIN` (add to ALIS?), cert for `matrix.dmi.unibas.ch`, nginx vhost on 443, docker group + SSH for everyone, reboot, Postgres backups off the VM
+- Then: clone into `/MARVIN`, `.env`, `setup.sh`, first test deploy
