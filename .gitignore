@@ -1,0 +1,66 @@
+# Server-side artifacts: generated, secret or runtime state.
+# These live only on the deployment host and must never be pushed to GitHub.
+
+# --- Secrets / environment ---------------------------------------------------
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+
+# --- Keys and certificates ---------------------------------------------------
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+**/nginx/certs/
+
+# --- Synapse runtime data (signing key, rendered config, media, logs, pid) ---
+**/data/
+*.signing.key
+homeserver.yaml
+*.log.config
+*.pid
+
+# --- Rendered configs (rendered from *.template, contain secrets) ------------
+**/admin/config.json
+**/maubot/config.yaml
+!*.template
+
+# --- Maubot runtime state ----------------------------------------------------
+**/maubot/plugins/
+**/maubot/trash/
+**/maubot/logs/
+*.mbp
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# --- Backups and database dumps ----------------------------------------------
+**/backup/
+*.dump
+*.sql
+*.sql.gz
+*.tar
+*.tar.gz
+*.tgz
+.staging_*
+.tmp_*
+
+# --- Logs --------------------------------------------------------------------
+*.log
+*.log.*
+
+# --- Docker overrides (often hold host-specific ports or secrets) ------------
+docker-compose.override.yml
+compose.override.yml
+
+# --- Editor / OS noise -------------------------------------------------------
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
