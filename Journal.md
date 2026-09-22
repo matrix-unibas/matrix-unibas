@@ -141,9 +141,7 @@ What we found on the server:
 - "System restart required" is shown at login.
 
 ## Next steps
-- Team: go through `docs/deployment.md`, confirm the server name `matrix.dmi.unibas.ch`, review and merge PR #1
 - Decide: Postgres in Docker or the ITS Postgres 18
 - Check ourselves (commands collected, see chat/doc): does ALIS overwrite own nginx sites / LVs / group changes, is 443 reachable from outside, Postgres collation + access from Docker
 - Clarify with ITS: storage (`/var` + data volume), cert for `matrix.dmi.unibas.ch`, nginx vhost on 443, docker group + SSH for everyone, reboot, Postgres backups off the VM
-- `setup.sh`: generate the secrets automatically on first run (`openssl rand -hex 32`) instead of filling them into `.env` by hand
 - Then: clone, `.env`, `setup.sh`, first test deploy
