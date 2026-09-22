@@ -121,3 +121,28 @@ Use the script like this: bash restore.sh "path to backup tar file"
 
 ## Next step 
     - change all to ansible if possible maybe?
+
+## 22.09.2026 - vs
+
+First login on the ITS VM (`dmi-matrix.dmi.unibas.ch`, service name `matrix.dmi.unibas.ch`), managed by ITS through ALIS (Ansible). Only looked around, nothing changed or installed yet.
+In the repo: added a `.gitignore` for everything that must stay on the server (secrets, rendered configs, data, certs, backups), a proposed deployment plan in `docs/deployment.md` and PR #1 with the repo preparation (step 1 of the plan). Summary, doc and PR were prepared with Claude Code as proposals, the team decides.
+
+What we found on the server:
+- **System:** Ubuntu 26.04, 4 vCPU, 7.2 GB RAM, 1 TB disk (as allocated). Login with the unibas short login, sudo works.
+- **ALIS roles:** `wsym.common`, `wsym.postgres`, `wsym.docker`, `wsym.letsencrypt`, runs regularly in "Live" mode. Files managed by ALIS should not be edited by hand, they may get overwritten. The ALIS playbook view contains access tokens: never copy them anywhere.
+- **Storage:** Volume group `sysvg` has ~973 GB free, but the mounted volumes are small: `/` 6 GB (81 % used), `/opt` 4 GB, `/var` 6 GB, `/var/lib/postgresql/backups` 8 GB. Docker uses the default `/var/lib/docker` (no `daemon.json`) -> `/var` is too small for Docker + media, needs more space before deploying.
+- **Docker:** Docker 29.1, Compose 2.40 installed. We are not in the `docker` group yet, `sudo docker` works. Pulling from Docker Hub works.
+- **Nginx:** running, but only a `redirect` site on port 80. Nothing listens on 443 yet, no vhost for us.
+- **TLS:** Let's Encrypt cert in `/etc/ssl/` covers only `dmi-matrix.dmi.unibas.ch`, not `matrix.dmi.unibas.ch`.
+- **DNS:** `matrix.dmi.unibas.ch` already points to the VM.
+- **Postgres:** Postgres 18 on the host, listens on 5432 (allowed from uni networks only, not from the Docker network). Local backups in `/var/lib/postgresql/backups`, not copied off the VM according to the ALIS config.
+- **Network:** GitHub, ghcr.io (Synapse image) and dock.mau.dev (Maubot image) are reachable.
+- **SSH:** tunnels to localhost are allowed, so the admin UI via `ssh -L` will work.
+- "System restart required" is shown at login.
+
+## Next steps
+- Team: go through `docs/deployment.md`, confirm the server name `matrix.dmi.unibas.ch`, review and merge PR #1
+- Decide: Postgres in Docker or the ITS Postgres 18
+- Check ourselves (commands collected, see chat/doc): does ALIS overwrite own nginx sites / LVs / group changes, is 443 reachable from outside, Postgres collation + access from Docker
+- Clarify with ITS: storage (`/var` + data volume), cert for `matrix.dmi.unibas.ch`, nginx vhost on 443, docker group + SSH for everyone, reboot, Postgres backups off the VM
+- Then: clone, `.env`, `setup.sh`, first test deploy
