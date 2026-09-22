@@ -122,7 +122,7 @@ Use the script like this: bash restore.sh "path to backup tar file"
 ## Next step 
     - change all to ansible if possible maybe?
 
-## 22.09.2026 - vs
+## 22.09.2026 - vs, cj
 
 First login on the ITS VM (`dmi-matrix.dmi.unibas.ch`, service name `matrix.dmi.unibas.ch`), managed by ITS through ALIS (Ansible). Only looked around, nothing changed or installed yet.
 In the repo: added a `.gitignore` for everything that must stay on the server (secrets, rendered configs, data, certs, backups), a proposed deployment plan in `docs/deployment.md` and PR #1 with the repo preparation (step 1 of the plan). Summary, doc and PR were prepared with Claude Code as proposals, the team decides.
@@ -145,4 +145,5 @@ What we found on the server:
 - Decide: Postgres in Docker or the ITS Postgres 18
 - Check ourselves (commands collected, see chat/doc): does ALIS overwrite own nginx sites / LVs / group changes, is 443 reachable from outside, Postgres collation + access from Docker
 - Clarify with ITS: storage (`/var` + data volume), cert for `matrix.dmi.unibas.ch`, nginx vhost on 443, docker group + SSH for everyone, reboot, Postgres backups off the VM
+- `setup.sh`: generate the secrets automatically on first run (`openssl rand -hex 32`) instead of filling them into `.env` by hand
 - Then: clone, `.env`, `setup.sh`, first test deploy
