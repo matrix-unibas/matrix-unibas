@@ -1,0 +1,39 @@
+# Managed by setup.sh from homeserver.yaml.template 
+# do not hand-edit data/homeserver.yaml directly, edit the template and re-run setup.sh instead
+
+server_name: "${SERVER_NAME}"
+pid_file: /data/homeserver.pid
+signing_key_path: "/data/${SERVER_NAME}.signing.key"
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+database:
+  name: psycopg2
+  args:
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    database: ${POSTGRES_DB}
+    host: postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+media_store_path: /data/media_store
+report_stats: "${SYNAPSE_REPORT_STATS}"
+
+registration_shared_secret: "${SYNAPSE_REGISTRATION_SHARED_SECRET}"
+macaroon_secret_key: "${SYNAPSE_MACAROON_SECRET_KEY}"
+form_secret: "${SYNAPSE_FORM_SECRET}"
+
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+enable_registration: true
+registration_requires_token: true

@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: matrix-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  synapse:
+    image: ghcr.io/element-hq/synapse:${SYNAPSE_IMAGE_TAG}
+    container_name: matrix-synapse
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - UID=${HOST_UID:-1000}
+      - GID=${HOST_GID:-1000}
+    volumes:
+      - ./data:/data
+    ports:
+      - "${SYNAPSE_HTTP_PORT}:8008"
+
+  synapse-admin:
+    image: ghcr.io/etkecc/ketesa:latest
+    container_name: matrix-admin-ui
+    restart: unless-stopped
+    depends_on:
+      - synapse
+    environment:
+      - SERVER_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+    volumes:
+      - ./admin/config.json:/app/config.json:ro
+
+  nginx-admin:
+    image: nginx:alpine
+    container_name: matrix-admin-nginx
+    restart: unless-stopped
+    depends_on:
+      - synapse-admin
+      - synapse
+    volumes:
+      - ./nginx/admin.conf:/etc/nginx/conf.d/admin.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "127.0.0.1:${ADMIN_UI_PORT}:8443"
+
+  maubot:
+    image: dock.mau.dev/maubot/maubot:latest
+    container_name: matrix-maubot
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      synapse:
+        condition: service_started
+    volumes:
+      - ./maubot:/data
+    ports:
+      - "${MAUBOT_UI_PORT}:29316"
+
+
+volumes:
+  postgres_data:

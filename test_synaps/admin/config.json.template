@@ -1,0 +1,3 @@
+{
+  "restrictBaseUrl": "https://localhost:${ADMIN_UI_PORT}"
+}
