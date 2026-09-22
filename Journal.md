@@ -144,7 +144,5 @@ Storage: created a 500 GB LV `sysvg/marvinlv` (ext4), mounted on `/MARVIN` via `
 
 ## Next steps
 - Decide: Postgres in Docker or the ITS Postgres 18
-- Finish `/MARVIN`: add members to group `marvin`, `chgrp` + `chmod 2775`, move Docker data-root to `/MARVIN/docker`
-- Check ourselves (commands collected, see chat/doc): does ALIS overwrite own nginx sites / LVs / fstab / groups / `daemon.json`, is 443 reachable from outside, Postgres collation + access from Docker
-- Clarify with ITS: tell them about `marvinlv` on `/MARVIN` (add to ALIS?), cert for `matrix.dmi.unibas.ch`, nginx vhost on 443, docker group + SSH for everyone, reboot, Postgres backups off the VM
+- Clarify with ITS: nginx vhost on 443, docker group, reboot, Postgres backups off the VM
 - Then: clone into `/MARVIN`, `.env`, `setup.sh`, first test deploy
