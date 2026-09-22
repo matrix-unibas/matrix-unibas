@@ -14,23 +14,19 @@ Leave this running — it's the only path in. The admin UI is bound to `127.0.0.
 **3. Create an account and make it a server admin** 
 ```bash
 docker exec -it matrix-synapse register_new_matrix_user \
-  -c /data/homeserver.yaml http://localhost:8008
+  -c /data/homeserver.yaml -a http://localhost:8008
 ```
-```bash
-docker exec -it matrix-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-  -c "UPDATE users SET admin = 1 WHERE name = '@USERNAME:${SERVER_NAME}';"
-```
-Note: server admin ≠ room admin. This flag makes the account able to use the `/_synapse/admin` API, regardless of what rooms it's in.
+Note: `-a` flag creates the user directly as server admin. Server admin ≠ room admin: this flag makes the account able to use the `/_synapse/admin` API.
 
 **4. Connect with a browser**
-NOTE: Safari on macOS and Firefox on Linux do not work! -> workaround is to use Brave or Chrome
+NOTE: Safari on macOS and Firefox on Linux may fail due to strict self-signed certificate handling -> workaround is to use Brave or Chrome.
 
 - Go to:
 ```
 https://localhost:8443
 ```
-- Browser will warn about the certificate, it's self-signed on purpose, the admin UI is not meant to be publicly.
-- Use `http://10.34.64.160:8008` as server URL
-- Log in with the username/password from step 3
+- Browser will warn about the self-signed certificate (expected, since it is internal-only). Accept the certificate.
+- Use `https://localhost:8443` as the homeserver URL.
+- Log in with the admin username/password from step 3.
 
 Done.

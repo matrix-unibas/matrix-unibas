@@ -3,9 +3,13 @@
 
 server_name: "${SERVER_NAME}"
 public_baseurl: "https://${SERVER_NAME}/"
-serve_server_wellknown: true
+serve_server_wellknown: false
 pid_file: /data/homeserver.pid
 signing_key_path: "/data/${SERVER_NAME}.signing.key"
+
+# Federation disabled (private server)
+federation_domain_whitelist: []
+allow_public_rooms_over_federation: false
 
 listeners:
   - port: 8008
@@ -13,7 +17,7 @@ listeners:
     type: http
     x_forwarded: true
     resources:
-      - names: [client, federation]
+      - names: [client]
         compress: false
 
 database:
@@ -27,15 +31,20 @@ database:
     cp_min: 5
     cp_max: 10
 
+# Media storage
 media_store_path: /data/media_store
+max_upload_size: 50M
+media_retention:
+  local_media_lifetime: 30d
+  remote_media_lifetime: 30d
 report_stats: "${SYNAPSE_REPORT_STATS}"
 
 registration_shared_secret: "${SYNAPSE_REGISTRATION_SHARED_SECRET}"
 macaroon_secret_key: "${SYNAPSE_MACAROON_SECRET_KEY}"
 form_secret: "${SYNAPSE_FORM_SECRET}"
 
-trusted_key_servers:
-  - server_name: "matrix.org"
+# No external key servers needed without federation
+trusted_key_servers: []
 
 enable_registration: true
 registration_requires_token: true

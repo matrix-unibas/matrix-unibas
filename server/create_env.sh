@@ -11,25 +11,11 @@ generate_hex() {
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_FILE="${1:-}"
-
-# Determine target file location if not explicitly provided
-if [ -z "$TARGET_FILE" ]; then
-  if [ -d "$SCRIPT_DIR/test_synaps" ]; then
-    TARGET_FILE="$SCRIPT_DIR/test_synaps/.env"
-  else
-    TARGET_FILE="$SCRIPT_DIR/.env"
-  fi
-fi
+TARGET_FILE="${1:-$SCRIPT_DIR/.env}"
 
 # Check if .env file is already present
 if [ -f "$TARGET_FILE" ]; then
   echo "Error: Environment file already exists at '$TARGET_FILE'" >&2
-  exit 1
-fi
-
-if [ "$TARGET_FILE" = "$SCRIPT_DIR/test_synaps/.env" ] && [ -f "$SCRIPT_DIR/.env" ]; then
-  echo "Error: Environment file already exists at '$SCRIPT_DIR/.env'." >&2
   exit 1
 fi
 
@@ -69,10 +55,3 @@ EOF
 
 chmod 600 "$TARGET_FILE"
 echo "Environment file created successfully at: $TARGET_FILE"
-
-# If created in test_synaps/.env and running from root, also keep root .env in sync
-if [ "$TARGET_FILE" = "$SCRIPT_DIR/test_synaps/.env" ] && [ -d "$SCRIPT_DIR/test_synaps" ]; then
-  cp "$TARGET_FILE" "$SCRIPT_DIR/.env"
-  chmod 600 "$SCRIPT_DIR/.env"
-  echo "Also copied to: $SCRIPT_DIR/.env"
-fi
