@@ -24,7 +24,7 @@ required_vars=(
   SERVER_NAME POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
   SYNAPSE_REGISTRATION_SHARED_SECRET SYNAPSE_MACAROON_SECRET_KEY
   SYNAPSE_FORM_SECRET SYNAPSE_IMAGE_TAG SYNAPSE_HTTP_PORT SYNAPSE_REPORT_STATS
-  ADMIN_UI_PORT MAUBOT_ADMIN_PASSWORD
+  ADMIN_UI_PORT MAUBOT_UI_PORT MAUBOT_ADMIN_PASSWORD
 )
 for v in "${required_vars[@]}"; do
   if [ -z "${!v:-}" ]; then
@@ -41,7 +41,7 @@ fi
 export HOST_UID="$(id -u)"
 export HOST_GID="$(id -g)"
 
-mkdir -p "$DATA_DIR"
+mkdir -p "$DATA_DIR" "$CERT_DIR"
 
 SIGNING_KEY="$DATA_DIR/${SERVER_NAME}.signing.key"
 if [ ! -f "$SIGNING_KEY" ]; then
@@ -97,6 +97,4 @@ done
 echo "Synapse is up: http://localhost:${SYNAPSE_HTTP_PORT}"
 echo "Admin UI is up: https://localhost:${ADMIN_UI_PORT} (reach it via: ssh -L ${ADMIN_UI_PORT}:localhost:${ADMIN_UI_PORT} <vm-host>)"
 echo "Create an admin user with:"
-echo "docker compose exec synapse register_new_matrix_user -c /data/homeserver.yaml http://localhost:8008"
-echo "Then mark them as server admin in Postgres:"
-echo "docker compose exec postgres psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -c \"UPDATE users SET admin = 1 WHERE name = '@USERNAME:${SERVER_NAME}';\""
+echo "docker compose exec synapse register_new_matrix_user -c /data/homeserver.yaml -a http://localhost:8008"
