@@ -55,7 +55,7 @@ server:
     port: 29316
     # Public base URL where the server is visible.
     # When using a subpath here, your reverse proxy must strip out the prefix.
-    public_url: https://example.com
+    public_url: https://localhost:${ADMIN_UI_PORT}
     # The base path for the UI. Note that this does not change the API path.
     # Add a path prefix to public_url if you want everything on a subpath.
     ui_base_path: /_matrix/maubot
@@ -73,7 +73,7 @@ server:
 # clients in the management UI, since you can also just type the homeserver URL
 # into the box there.
 homeservers:
-    dmi.matrix.unibas.ch:
+    ${SERVER_NAME}:
         url: http://synapse:8008
         domain: ${SERVER_NAME}
 
@@ -132,7 +132,7 @@ logging:
 
 
 registration_secrets:
-    dmi.matrix.unibas.ch:
+    ${SERVER_NAME}:
         # Client-server API URL (note: often needs the full /_matrix/client/r0 path, or just the base URL — see note below)
         url: http://synapse:8008
         # Same value as SYNAPSE_REGISTRATION_SHARED_SECRET

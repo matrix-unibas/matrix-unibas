@@ -1,3 +1,5 @@
+name: marvin
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -31,7 +33,7 @@ services:
     volumes:
       - ./data:/data
     ports:
-      - "${SYNAPSE_HTTP_PORT}:8008"
+      - "127.0.0.1:${SYNAPSE_HTTP_PORT}:8008"
 
   synapse-admin:
     image: ghcr.io/etkecc/ketesa:latest
@@ -73,7 +75,7 @@ services:
     volumes:
       - ./maubot:/data
     ports:
-      - "${MAUBOT_UI_PORT}:29316"
+      - "127.0.0.1:${MAUBOT_UI_PORT}:29316"
 
 
 volumes:

@@ -2,6 +2,8 @@
 # do not hand-edit data/homeserver.yaml directly, edit the template and re-run setup.sh instead
 
 server_name: "${SERVER_NAME}"
+public_baseurl: "https://${SERVER_NAME}/"
+serve_server_wellknown: true
 pid_file: /data/homeserver.pid
 signing_key_path: "/data/${SERVER_NAME}.signing.key"
 
