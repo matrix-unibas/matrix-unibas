@@ -146,3 +146,30 @@ Storage: created a 500 GB LV `sysvg/marvinlv` (ext4), mounted on `/MARVIN` via `
 - Decide: Postgres in Docker or the ITS Postgres 18
 - Clarify with ITS: nginx vhost on 443, docker group, reboot, Postgres backups off the VM
 - Then: clone into `/MARVIN`, `.env`, `setup.sh`, first test deploy
+
+## 29.09.2026 - cj
+
+First deployment test of the stack on the ITS VM (`dmi-matrix.dmi.unibas.ch`).
+
+### What we tried:
+1. **Server Name Choice**: Decided on `matrix.dmi.unibas.ch` (service name) rather than `dmi-matrix.dmi.unibas.ch` (canonical host name) for the Matrix homeserver name, as Matrix User IDs (`@user:matrix.dmi.unibas.ch`) and the signing key are permanently bound to it.
+2. **Disk Storage**: The root/var partitions were small; extended `/var` by +40 GB (`sysvg-varlv` to 46 GB) to ensure Docker image layers and container volumes do not exhaust disk space.
+3. **Docker Stack Setup**:
+   - Initial run of `setup.sh` failed due to missing Docker socket permissions (`permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`). Resolved by adding the user to the `docker` group (`sudo usermod -aG docker $USER`).
+   - Re-running `./setup.sh` generated the signing key, rendered configuration files, and started the stack (Postgres, Synapse, Ketesa admin UI, Maubot, admin Nginx) successfully.
+4. **Host Nginx & Reverse Proxy**:
+   - External HTTPS requests failed initially because nothing was listening on port 443 (`curl: (7) Failed to connect to matrix.dmi.unibas.ch:443`).
+   - Configured a host Nginx reverse proxy site for `matrix.dmi.unibas.ch` forwarding `/_matrix`, `/_synapse/client`, and `/.well-known/matrix` to `127.0.0.1:8008` (using updated `http2 on;` directive and proxy timeouts for long-polling).
+   - Pointed TLS config temporarily to the host's existing certificate `/etc/ssl/dmi-matrix.dmi.unibas.ch.cert.pem`. `nginx -t` passed and Nginx reloaded cleanly.
+5. **Client Connection & Login**:
+   - Created an admin user via `register_new_matrix_user`.
+   - Attempted login via Element Desktop to `https://matrix.dmi.unibas.ch`.
+
+### What failed and why:
+- **Element stuck syncing (`ERR_CERT_COMMON_NAME_INVALID`)**:
+  While the initial connection was accepted, Element remained perpetually stuck syncing. Inspecting the Electron/Chromium Developer Tools revealed `ERR_CERT_COMMON_NAME_INVALID`.
+  - **Why:** The Let's Encrypt certificate on the VM was issued solely for `dmi-matrix.dmi.unibas.ch` and lacks `matrix.dmi.unibas.ch` in its Subject Alternative Names (SAN). Element's background sync workers strictly enforce SSL certificate hostname verification and blocked all `/sync` requests.
+- All temporary configuration changes on the VM were reverted back to a clean state.
+
+### Next steps:
+- Try again, with other cert, or change nginx conf, because the problem is most likely there
