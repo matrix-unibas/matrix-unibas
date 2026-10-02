@@ -43,6 +43,14 @@ fi
 export HOST_UID="$(id -u)"
 export HOST_GID="$(id -g)"
 
+# Public IP for coturn (listening-ip / relay-ip). Can be set in .env, defaults to
+# the IPv4 address SERVER_NAME resolves to
+export TURN_PUBLIC_IP="${TURN_PUBLIC_IP:-$(getent ahostsv4 "$SERVER_NAME" | awk 'NR==1 {print $1}')}"
+if [ -z "$TURN_PUBLIC_IP" ]; then
+  echo "Error: could not resolve $SERVER_NAME, set TURN_PUBLIC_IP in $ENV_FILE" >&2
+  exit 1
+fi
+
 mkdir -p "$DATA_DIR" "$CERT_DIR"
 
 SIGNING_KEY="$DATA_DIR/${SERVER_NAME}.signing.key"
