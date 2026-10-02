@@ -77,6 +77,14 @@ services:
     ports:
       - "127.0.0.1:${MAUBOT_UI_PORT}:29316"
 
+  coturn:
+    image: coturn/coturn:latest
+    container_name: matrix-coturn
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+      - ./coturn/turnserver.conf:/etc/turnserver.conf:ro
 
 volumes:
   postgres_data:

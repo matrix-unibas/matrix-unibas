@@ -193,3 +193,21 @@ To fully reset the server: `docker compose down -v` (deletes the Postgres volume
 
 ### Admin UI:
 Logging in to the admin UI (Ketesa) through the SSH tunnel worked, but fetching data did not. We switched to running Ketesa locally on the laptop (`docker run --rm -p 8080:8080 ghcr.io/etkecc/ketesa:latest` -> `http://localhost:8080`, homeserver `https://matrix.dmi.unibas.ch`). For this, the host nginx now forwards `/_synapse/admin` to Synapse, but only from the uni network (`131.152.0.0/16`) and internal/VPN addresses (`10.0.0.0/8`), everyone else gets 403. Works now, see `server/docs/admin_ui.md`. The admin UI containers in the stack (`synapse-admin`, `nginx-admin`) are no longer needed.
+
+### VoIP / Coturn (STUN/TURN):
+Integrated Coturn into the stack to support 1:1 voice and video calls in Element/Matrix clients when users are behind NAT or firewalls.
+
+- **Docker Compose**: Added the `coturn` service (`coturn/coturn:latest`) with `network_mode: host` to allow direct access to network interfaces without Docker port forwarding overhead for WebRTC UDP media traffic.
+- **Coturn configuration**:
+  - Added template [server/coturn/turnserver.conf.template](file:///home/chris/Documents/unibas/Matrix_uni/matrix-unibas/server/coturn/turnserver.conf.template).
+  - Configured STUN/TURN listening ports on 3478 and TLS on 5349.
+  - Configured shared secret authentication (`use-auth-secret`, `static-auth-secret`) for Matrix.
+  - Defined relay UDP port range `49152-49200`.
+  - Added SSRF protection (`denied-peer-ip`) against private IP ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `127.0.0.0/8`).
+- **Secrets & setup scripts**:
+  - Added `SYNAPSE_TURN_SHARED_SECRET` to `.env.example`.
+  - Updated `create_env.sh` to generate a random 32-byte hex TURN secret automatically.
+  - Updated `setup.sh` to validate `SYNAPSE_TURN_SHARED_SECRET`, create `server/coturn/`, and render `server/coturn/turnserver.conf` via `envsubst`.
+  - Added `**/coturn/turnserver.conf` to `.gitignore` so rendered credentials are not tracked.
+- **Synapse configuration**:
+  - Updated `server/homeserver.yaml.template` with `turn_uris` (UDP and TCP on port 3478), `turn_shared_secret`, `turn_user_lifetime: 2h`, and `turn_allow_guests: false`.

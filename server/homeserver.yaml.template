@@ -46,5 +46,13 @@ form_secret: "${SYNAPSE_FORM_SECRET}"
 # No external key servers needed without federation
 trusted_key_servers: []
 
+# TURN / STUN (VoIP voice & video calls)
+turn_uris:
+  - "turn:${SERVER_NAME}:3478?transport=udp"
+  - "turn:${SERVER_NAME}:3478?transport=tcp"
+turn_shared_secret: "${SYNAPSE_TURN_SHARED_SECRET}"
+turn_user_lifetime: 2h
+turn_allow_guests: false
+
 enable_registration: true
 registration_requires_token: true

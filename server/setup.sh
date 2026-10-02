@@ -8,6 +8,8 @@ DATA_DIR="./data"
 TEMPLATE="./homeserver.yaml.template"
 ADMIN_CONFIG_TEMPLATE="./admin/config.json.template"
 ADMIN_CONFIG_OUT="./admin/config.json"
+COTURN_CONFIG_TEMPLATE="./coturn/turnserver.conf.template"
+COTURN_CONFIG_OUT="./coturn/turnserver.conf"
 CERT_DIR="./nginx/certs"
 CERT_FILE="$CERT_DIR/admin-selfsigned.crt"
 KEY_FILE="$CERT_DIR/admin-selfsigned.key"
@@ -23,7 +25,7 @@ set -a; source "$ENV_FILE"; set +a
 required_vars=(
   SERVER_NAME POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
   SYNAPSE_REGISTRATION_SHARED_SECRET SYNAPSE_MACAROON_SECRET_KEY
-  SYNAPSE_FORM_SECRET SYNAPSE_IMAGE_TAG SYNAPSE_HTTP_PORT SYNAPSE_REPORT_STATS
+  SYNAPSE_FORM_SECRET SYNAPSE_TURN_SHARED_SECRET SYNAPSE_IMAGE_TAG SYNAPSE_HTTP_PORT SYNAPSE_REPORT_STATS
   ADMIN_UI_PORT MAUBOT_UI_PORT MAUBOT_ADMIN_PASSWORD
 )
 for v in "${required_vars[@]}"; do
@@ -62,6 +64,10 @@ envsubst < "$TEMPLATE" > "$DATA_DIR/homeserver.yaml"
 
 echo "Rendering admin UI config.json from template"
 envsubst < "$ADMIN_CONFIG_TEMPLATE" > "$ADMIN_CONFIG_OUT"
+
+echo "Rendering Coturn turnserver.conf from template"
+mkdir -p ./coturn
+envsubst < "$COTURN_CONFIG_TEMPLATE" > "$COTURN_CONFIG_OUT"
 
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
   echo "No admin UI TLS cert found, generating a self-signed one"

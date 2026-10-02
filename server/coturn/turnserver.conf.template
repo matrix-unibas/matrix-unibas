@@ -1,0 +1,25 @@
+# Coturn configuration for Matrix Synapse
+# Listening ports for STUN/TURN
+listening-port=3478
+tls-listening-port=5349
+
+# Matrix realm & static secret authentication
+realm=${SERVER_NAME}
+use-auth-secret
+static-auth-secret=${SYNAPSE_TURN_SHARED_SECRET}
+
+# Relay UDP port range (ensure this range is allowed in host firewall)
+min-port=49152
+max-port=49200
+
+# Security: prevent coturn from relaying to private local subnets (SSRF protection)
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=127.0.0.0-127.255.255.255
+
+fingerprint
+lt-cred-mech
+no-cli
+no-multicast-peers
+log-file=stdout

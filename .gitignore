@@ -27,6 +27,7 @@ homeserver.yaml
 # --- Rendered configs (rendered from *.template, contain secrets) ------------
 **/admin/config.json
 **/maubot/config.yaml
+**/coturn/turnserver.conf
 !*.template
 
 # --- Maubot runtime state ----------------------------------------------------
