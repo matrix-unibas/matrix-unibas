@@ -199,7 +199,6 @@ Integrated Coturn into the stack to support 1:1 voice and video calls in Element
 
 - **Docker Compose**: Added the `coturn` service (`coturn/coturn:latest`) with `network_mode: host` to allow direct access to network interfaces without Docker port forwarding overhead for WebRTC UDP media traffic.
 - **Coturn configuration**:
-  - Added template [server/coturn/turnserver.conf.template](file:///home/chris/Documents/unibas/Matrix_uni/matrix-unibas/server/coturn/turnserver.conf.template).
   - Configured STUN/TURN listening ports on 3478 and TLS on 5349.
   - Configured shared secret authentication (`use-auth-secret`, `static-auth-secret`) for Matrix.
   - Defined relay UDP port range `49152-49200`.
