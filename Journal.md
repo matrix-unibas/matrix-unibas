@@ -199,10 +199,12 @@ Integrated Coturn into the stack to support 1:1 voice and video calls in Element
 
 - **Docker Compose**: Added the `coturn` service (`coturn/coturn:latest`) with `network_mode: host` to allow direct access to network interfaces without Docker port forwarding overhead for WebRTC UDP media traffic.
 - **Coturn configuration**:
-  - Configured STUN/TURN listening ports on 3478 and TLS on 5349.
+  - STUN/TURN on 3478 (UDP + TCP), no TLS (`no-tls`).
+  - Listens and relays only on the public IP (`listening-ip` / `relay-ip` = `TURN_PUBLIC_IP`, `setup.sh` resolves it from `SERVER_NAME`), otherwise coturn also hands out Docker-internal relay addresses.
   - Configured shared secret authentication (`use-auth-secret`, `static-auth-secret`) for Matrix.
   - Defined relay UDP port range `49152-49200`.
-  - Added SSRF protection (`denied-peer-ip`) against private IP ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `127.0.0.0/8`).
+  - Hardening: full `denied-peer-ip` list from the Synapse docs, `no-tcp-relay` (relay can't reach TCP services on the VM, e.g. host Postgres), `user-quota` / `total-quota`, own IP allowed as peer (`allowed-peer-ip`) for relay-to-relay.
+  - Container starts with only our config (`command: -c ...`), the image default runs `detect-external-ip`, which fails on the VM.
 - **Secrets & setup scripts**:
   - Added `SYNAPSE_TURN_SHARED_SECRET` to `.env.example`.
   - Updated `create_env.sh` to generate a random 32-byte hex TURN secret automatically.
@@ -210,3 +212,8 @@ Integrated Coturn into the stack to support 1:1 voice and video calls in Element
   - Added `**/coturn/turnserver.conf` to `.gitignore` so rendered credentials are not tracked.
 - **Synapse configuration**:
   - Updated `server/homeserver.yaml.template` with `turn_uris` (UDP and TCP on port 3478), `turn_shared_secret`, `turn_user_lifetime: 2h`, and `turn_allow_guests: false`.
+
+Ports opened manually in ufw on the VM (not possible via ALIS): `3478/tcp`, `3478/udp`, `49152:49200/udp`.
+
+**Issue:** room video conferences work (they run via Element Call over Element's servers, not our coturn), but 1:1 calls have no audio/video. coturn runs and listens correctly, but: UDP never reaches the VM, and over TCP only the handshake arrives, coturn receives 0 bytes (checked with tcpdump). Same from uni network/VPN and from outside. So something between the clients and the VM (firewall) blocks STUN/TURN.
+-> Opened an ITS ticket to allow 3478/tcp+udp and 49152-49200/udp to the VM from uni network/VPN and internet.
