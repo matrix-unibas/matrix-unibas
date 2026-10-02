@@ -48,6 +48,10 @@ denied-peer-ip=2002::-2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 
+# Allow the TURN server itself as peer, so client -> TURN -> TURN -> client works.
+# Needed when both callers can only use relay candidates (e.g. VPN without UDP).
+allowed-peer-ip=${TURN_PUBLIC_IP}
+
 # Limit relayed streams to avoid abuse (4 streams per video call)
 user-quota=12
 total-quota=1200
