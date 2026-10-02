@@ -82,9 +82,11 @@ services:
     container_name: matrix-coturn
     restart: unless-stopped
     network_mode: host
+    # Only our config, no default args: the image default runs detect-external-ip,
+    # which fails on the VM and is not needed (public IP is directly on the interface)
+    command: ["-c", "/etc/coturn/turnserver.conf"]
     volumes:
       - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
-      - ./coturn/turnserver.conf:/etc/turnserver.conf:ro
 
 volumes:
   postgres_data:

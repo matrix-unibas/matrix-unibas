@@ -4,7 +4,6 @@ listening-port=3478
 
 # No TURN over TLS for now (no cert configured, turn_uris only use turn:)
 no-tls
-no-dtls
 
 # Matrix realm & static secret authentication
 realm=${SERVER_NAME}
@@ -48,6 +47,4 @@ user-quota=12
 total-quota=1200
 
 fingerprint
-lt-cred-mech
-no-cli
 log-file=stdout
