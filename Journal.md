@@ -190,3 +190,6 @@ Fixed the failed deployment from 29.09. The server now runs on the VM and is rea
 - Created an admin user with `register_new_matrix_user`, logged in with Element Desktop, tested messages and groups.
 
 To fully reset the server: `docker compose down -v` (deletes the Postgres volume!), not only deleting `data/`.
+
+### Admin UI:
+Logging in to the admin UI (Ketesa) through the SSH tunnel worked, but fetching data did not. We switched to running Ketesa locally on the laptop (`docker run --rm -p 8080:8080 ghcr.io/etkecc/ketesa:latest` -> `http://localhost:8080`, homeserver `https://matrix.dmi.unibas.ch`). For this, the host nginx now forwards `/_synapse/admin` to Synapse, but only from the uni network (`131.152.0.0/16`) and internal/VPN addresses (`10.0.0.0/8`), everyone else gets 403. Works now, see `server/docs/admin_ui.md`. The admin UI containers in the stack (`synapse-admin`, `nginx-admin`) are no longer needed.
