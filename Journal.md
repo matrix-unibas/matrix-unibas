@@ -173,3 +173,20 @@ First deployment test of the stack on the ITS VM (`dmi-matrix.dmi.unibas.ch`).
 
 ### Next steps:
 - Try again, with other cert, or change nginx conf, because the problem is most likely there
+
+## 02.10.2026 - vs, cj
+
+Fixed the failed deployment from 29.09. The server now runs on the VM and is reachable at `https://matrix.dmi.unibas.ch`. We tested sending messages and group chats with Element Desktop, both work.
+
+### What was wrong:
+- **Wrong certificate:** ITS had already issued a Let's Encrypt cert for `matrix.dmi.unibas.ch` via ALIS (`wsym_letsencrypt`, DNS-01) on 29.09, in `/etc/ssl/matrix.dmi.unibas.ch.{fullchain,privkey}.pem`. But the host nginx vhost still pointed to the `dmi-matrix.dmi.unibas.ch` host cert -> `ERR_CERT_COMMON_NAME_INVALID` in Element. Also, the vhost in `/etc/nginx/sites-available/` was a separate copy, so editing the repo file changed nothing.
+- **Old Postgres volume:** the containers and the `postgres_data` volume from the 29.09 test were still there. Postgres keeps the password from its first start, so with the new `.env` secrets Synapse and Maubot failed with `password authentication failed for user "synapse"` and kept restarting (admin nginx followed, because it could not find `maubot`). `setup.sh` just waited forever without any output.
+
+### What we did:
+- `server/nginx/matrix.conf` now uses the `matrix.dmi.unibas.ch` fullchain + privkey. Removed our port-80 block, the ALIS `redirect` site already does HTTP -> HTTPS (and renewal uses DNS-01, so port 80 is not needed for it).
+- `/etc/nginx/sites-available/matrix.dmi.unibas.ch.conf` is now a symlink to `/MARVIN/matrix-unibas/server/nginx/matrix.conf` (old copy backed up in the home folder). Config changes: `git pull`, then `sudo nginx -t && sudo systemctl reload nginx`.
+- Tested from outside: correct cert (valid until 28.12.2026, chain ok), HTTP -> HTTPS redirect, `/` and `/_synapse/admin` give 404, `/_matrix` reaches Synapse.
+- `docker compose down -v` to remove the old test volume, then `./setup.sh` again -> all containers up.
+- Created an admin user with `register_new_matrix_user`, logged in with Element Desktop, tested messages and groups.
+
+To fully reset the server: `docker compose down -v` (deletes the Postgres volume!), not only deleting `data/`.
