@@ -40,8 +40,8 @@ if ! command -v envsubst >/dev/null 2>&1; then
   exit 1
 fi
 
-export HOST_UID="$(id -u)"
-export HOST_GID="$(id -g)"
+export HOST_UID="${HOST_UID:-$(id -u)}"
+export HOST_GID="${HOST_GID:-$(id -g)}"
 
 # Public IP for coturn (listening-ip / relay-ip). Can be set in .env, defaults to
 # the IPv4 address SERVER_NAME resolves to
