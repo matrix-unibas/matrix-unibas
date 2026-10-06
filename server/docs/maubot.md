@@ -48,7 +48,7 @@ You can do this through the Ketesa admin UI or the documented commands. Create a
 docker exec -it matrix-maubot /usr/bin/python3 -m maubot.cli login
 ```
 
-Use the admin username and password from Preparations and `http://localhost:29316` for the Server. You may omit Alias.
+Use the admin (maubot admin, not the bots user!) username and password from Preparations and `http://localhost:29316` for the Server. You may omit Alias.
 
 ### Creating the bot account
 
