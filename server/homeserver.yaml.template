@@ -17,7 +17,7 @@ listeners:
     type: http
     x_forwarded: true
     resources:
-      - names: [client]
+      - names: [client, consent]
         compress: false
 
 database:
@@ -42,6 +42,16 @@ report_stats: "${SYNAPSE_REPORT_STATS}"
 registration_shared_secret: "${SYNAPSE_REGISTRATION_SHARED_SECRET}"
 macaroon_secret_key: "${SYNAPSE_MACAROON_SECRET_KEY}"
 form_secret: "${SYNAPSE_FORM_SECRET}"
+
+# Terms and Conditions / User Consent
+user_consent:
+  template_dir: /consent_templates
+  version: "1.0"
+  policy_name: "Terms and Conditions"
+  require_at_registration: true
+  block_events_error: >-
+    You must agree to the Terms and Conditions before sending messages.
+    Please visit %(consent_uri)s
 
 # No external key servers needed without federation
 trusted_key_servers: []
