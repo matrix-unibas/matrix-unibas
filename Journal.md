@@ -243,6 +243,13 @@ Ports opened manually in ufw on the VM (not possible via ALIS): `3478/tcp`, `347
 ### Element Web:
 - Element Web now served at `https://matrix.dmi.unibas.ch/` 
 
+### Terms and Conditions:
+- Enabled Synapse's user consent feature (`user_consent` in `server/homeserver.yaml.template`), policy name "Terms and Conditions", `require_at_registration: true`. Users who have not agreed can't send messages and get a link to the consent page instead (`block_events_error`).
+- Added the `consent` resource to the client listener, so the page is served at `/_matrix/consent` (already covered by the `/_matrix` location in the host nginx).
+- Templates live in `server/consent_templates/en/` and are mounted read-only into Synapse (`/consent_templates`). `<version>.html` is the terms page (acceptable use, privacy & data handling, service availability), `success.html` is shown after agreeing (now with Marvin, `/marvin.png` from `server/www`).
+- Bumped the version to `1.1` (`1.1.html`). Changing the terms works the same way: add a new `<version>.html`, set `version` in the template, run `setup.sh` -> every user has to agree again.
+- The terms text is a first draft.
+
 ### Meeting with Martin:
 Übersicht über verschiedene Möglichkeiten für Production:
 
