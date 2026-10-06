@@ -36,9 +36,16 @@ docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --
 echo "dumping maubot DB (bots, admin bot state)"
 docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d maubot --format=custom > "$STAGE_DIR/maubot.dump"
 
-echo "dumping userbots DB + plugin files"
-docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d userbots --format=custom > "$STAGE_DIR/userbots.dump"
-sudo rsync -a ./userbots/plugins "$STAGE_DIR/userbots_plugins"
+# Only once the userbots maubot exists (Phase 8). Its plugin files are the only copy of
+# professors' .mbp files; sudo tar so the staging dir holds no root-owned files.
+if docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+    "SELECT 1 FROM pg_database WHERE datname = 'userbots'" | grep -q 1; then
+  echo "dumping userbots DB + plugin files"
+  docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d userbots --format=custom > "$STAGE_DIR/userbots.dump"
+  if sudo test -d ./userbots/plugins; then
+    sudo tar -cf - -C ./userbots plugins > "$STAGE_DIR/userbots_plugins.tar"
+  fi
+fi
 
 echo "syncing Synapse data + config + keys"
 rsync -a \

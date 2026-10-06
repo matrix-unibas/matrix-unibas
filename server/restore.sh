@@ -69,7 +69,10 @@ if [ -f "$STAGE_DIR/userbots.dump" ]; then
   echo "Restoring userbots"
   docker compose stop userbots
   docker compose exec -T postgres pg_restore -U "$POSTGRES_USER" -d userbots --clean --if-exists < "$STAGE_DIR/userbots.dump"
-  sudo rsync -a --delete "$STAGE_DIR/userbots_plugins/plugins/" ./userbots/plugins/
+  if [ -f "$STAGE_DIR/userbots_plugins.tar" ]; then
+    sudo rm -rf ./userbots/plugins
+    sudo tar -xf "$STAGE_DIR/userbots_plugins.tar" -C ./userbots
+  fi
   sudo chown -R 1337:1337 ./userbots
   docker compose start userbots
 fi

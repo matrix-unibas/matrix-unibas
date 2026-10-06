@@ -90,17 +90,16 @@ fi
 
 echo "Rendering Maubot configs"
 mkdir -p ./maubot
-sudo chown -R "$HOST_UID:$HOST_GID" ./maubot
 
-# Render templates globally with all environment variables loaded
-envsubst < "./maubot/config.yaml.template" > "./maubot/config.yaml"
+# Render templates globally with all environment variables loaded.
+# sudo tee: the dirs belong to the container user 1337, whoever runs this script
+envsubst < "./maubot/config.yaml.template" | sudo tee "./maubot/config.yaml" >/dev/null
 
 sudo chown -R 1337:1337 ./maubot
 
 echo "Rendering userbots config"
 mkdir -p ./userbots
-sudo chown -R "$HOST_UID:$HOST_GID" ./userbots
-envsubst < "./userbots/config.yaml.template" > "./userbots/config.yaml"
+envsubst < "./userbots/config.yaml.template" | sudo tee "./userbots/config.yaml" >/dev/null
 sudo chown -R 1337:1337 ./userbots
 
 echo "Starting stack"
