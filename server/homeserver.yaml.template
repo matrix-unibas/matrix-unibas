@@ -46,7 +46,7 @@ form_secret: "${SYNAPSE_FORM_SECRET}"
 # Terms and Conditions / User Consent
 user_consent:
   template_dir: /consent_templates
-  version: "1.0"
+  version: "1.1"
   policy_name: "Terms and Conditions"
   require_at_registration: true
   block_events_error: >-
