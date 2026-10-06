@@ -47,6 +47,15 @@ services:
     ports:
       - "127.0.0.1:${ADMIN_UI_PORT}:8443"
 
+  element:
+    image: vectorim/element-web:${ELEMENT_IMAGE_TAG}
+    container_name: matrix-element
+    restart: unless-stopped
+    volumes:
+      - ./element/config.json:/app/config.json:ro
+    ports:
+      - "127.0.0.1:${ELEMENT_HTTP_PORT}:80"
+
   maubot:
     image: dock.mau.dev/maubot/maubot:latest
     container_name: matrix-maubot

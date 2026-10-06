@@ -26,7 +26,9 @@ This will:
 2. Bootstrap the Synapse signing key (on first run)
 3. Render `data/homeserver.yaml`, `admin/config.json`, and `maubot/config.yaml` from templates
 4. Generate self-signed certificates for the internal admin UI
-5. Start Postgres, Synapse, Ketesa (synapse-admin), Admin Nginx, and Maubot
+5. Start Postgres, Synapse, Element Web, Ketesa (synapse-admin), Admin Nginx, and Maubot
+
+Element Web is served at `https://matrix.dmi.unibas.ch/` by the host nginx. Its config is the static `element/config.json`.
 
 ## 3. Verify Services
 Check container status:

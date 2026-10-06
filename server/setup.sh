@@ -26,6 +26,7 @@ required_vars=(
   SERVER_NAME POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
   SYNAPSE_REGISTRATION_SHARED_SECRET SYNAPSE_MACAROON_SECRET_KEY
   SYNAPSE_FORM_SECRET SYNAPSE_TURN_SHARED_SECRET SYNAPSE_IMAGE_TAG SYNAPSE_HTTP_PORT SYNAPSE_REPORT_STATS
+  ELEMENT_IMAGE_TAG ELEMENT_HTTP_PORT
   ADMIN_UI_PORT MAUBOT_UI_PORT MAUBOT_ADMIN_PASSWORD
 )
 for v in "${required_vars[@]}"; do
@@ -109,6 +110,7 @@ until curl -sf "http://localhost:${SYNAPSE_HTTP_PORT}/health" >/dev/null 2>&1; d
 done
 
 echo "Synapse is up: http://localhost:${SYNAPSE_HTTP_PORT}"
+echo "Element is up: https://${SERVER_NAME}/ (container on localhost:${ELEMENT_HTTP_PORT})"
 echo "Admin UI is up: https://localhost:${ADMIN_UI_PORT} (reach it via: ssh -L ${ADMIN_UI_PORT}:localhost:${ADMIN_UI_PORT} <vm-host>)"
 echo "Create an admin user with:"
 echo "docker compose exec synapse register_new_matrix_user -c /data/homeserver.yaml -a http://localhost:8008"
