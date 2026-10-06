@@ -261,3 +261,31 @@ Ports opened manually in ufw on the VM (not possible via ALIS): `3478/tcp`, `347
   - Bot vs. Anderes ? 
   - Element UI 
   - Erst am 20. wieder 
+
+## 06.-07.10.2026 - nk
+
+### Admin bot on production:
+- Bot runs as `@adminbot` in the existing maubot (instance `adminbot`), plugin data in Postgres (`plugin_databases.postgres: default`), maubot image pinned via `MAUBOT_IMAGE_TAG` (v0.6.0), `maubot` DB included in `backup.sh` / `restore.sh`.
+- `!whoami` got no answer at first. `admins` in the instance config held only the localpart (`noah`), but the bot compares full Matrix IDs, so it treated me as unknown and stayed silent (by design). An unquoted `@...` is invalid YAML, which is why the UI rejected it. Fix: `- "@noah:matrix.dmi.unibas.ch"` (quoted).
+
+### Professor bots: second maubot `userbots`:
+- Why: maubot plugins aren't sandboxed, so any plugin in the main maubot could read the admin bot's server-admin token. Professor plugins therefore run in a separate maubot: container `matrix-userbots`, own DB `userbots`, own pickle key, **no published port** (only reachable as `http://userbots:29316` on the Docker network), only login is `adminbot`, `client_auth` / `dev_open` / `instance_database` / `client_proxy` / `log` off, no `registration_secrets`.
+- Repo: `docker-compose.yml` (service `userbots`), `server/userbots/config.yaml.template`, `.env.example` + `create_env.sh` (`USERBOTS_ADMIN_PASSWORD`, `USERBOTS_CRYPTO_PICKLE_KEY`), `setup.sh`, `postgres-init.sh`, `backup.sh` / `restore.sh` (DB + `userbots/plugins/`, the only copy of professors' plugins), `.gitignore`.
+- On the VM: secrets appended to `.env`, `CREATE DATABASE userbots` by hand (`postgres-init.sh` only runs on a fresh volume), `./setup.sh`. Container runs, no port published, reachable from the maubot container.
+- Problems on the way:
+  - `backup.sh` failed because it dumped `userbots` before the DB existed. It now skips that part until the DB exists. The plugin files are copied with `sudo tar` (instead of `sudo rsync`) so the staging dir holds no root-owned files that the cleanup can't delete.
+  - `setup.sh`: `Permission denied` writing `maubot/config.yaml`. `HOST_UID` in `.env` is the owner of `data/` (see 06.10), not the user running the script, so the `chown` to `HOST_UID` didn't make the dir writable for us. Configs are now written with `sudo tee`, independent of `HOST_UID`.
+  - Login to `userbots` gave 401: the template named the login `admin`, the admin bot uses `adminbot`. Also `client_auth`, `dev_open` and `instance_database` were still on. Both fixed in the template.
+  - `git pull` failed with `unable to unlink old 'server/userbots/config.yaml.template'`: `setup.sh` and the container give `server/maubot/` and `server/userbots/` to uid 1337, and the templates live inside. Workaround: `sudo chown` the folder + template back to us before pulling (documented in `admin-bot-setup.md`, Troubleshooting).
+  - `.gitignore` pattern `**userbots/config.yaml` (missing `/`) didn't match `server/userbots/config.yaml`, which holds secrets. Fixed to `**/userbots/...`.
+- enabled `user_bots` in the admin bot config, end-to-end tested with a non-admin professor (`!bot create` → approve → bot answers → `!bot delete`)
+
+- Updated documentation to reflect the changes.
+
+### Next steps:
+- **Switch off open registration** (`enable_registration: false` in `homeserver.yaml.template`, drop `registration_requires_token`), now that signup links are the way accounts are created. The admin API (bot, Ketesa) still creates accounts.
+-> or should we keep it on?
+- **Move the config templates out of the container folders** (e.g. `server/maubot.config.yaml.template`, `server/userbots.config.yaml.template`), so `git pull` no longer fails on folders owned by uid 1337. `setup.sh` keeps rendering into `maubot/` and `userbots/`.
+- **Proper testing of the admin bot** on the test node: run the full level-4 checklist from the bot README (E2EE DMs, file uploads, signup page, interrupted jobs, archive/rollover, professor bots), with real professor/TA/student test accounts.
+- **Usage guide** for professors and TAs (phase 9): how to create a course, invite students, use signup links, groups, templates, own bots. Plus an admin runbook.
+- **More informative help:** `!help` only lists one usage line per command, and there is no `!help <command>` yet. Add `!help <command>` with a longer description, the options and an example per command.

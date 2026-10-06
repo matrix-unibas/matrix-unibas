@@ -1,5 +1,10 @@
 # Maubot
 
+This is the manual process for bots in the **main** maubot (`matrix-maubot`), which also runs the admin bot (see [admin-bot-setup.md](admin-bot-setup.md)).
+
+- Only install plugins you trust here. maubot plugins aren't sandboxed: any plugin in this maubot can read the admin bot's server-admin token.
+- **Professors' bots don't go here.** Professors request them from the admin bot (`!bot create <name>` + `.mbp`). After approval they run in the separate `userbots` maubot ([admin-bot-setup.md](admin-bot-setup.md), section 7).
+
 ## Preparation
 -> similar to Admin console
 
