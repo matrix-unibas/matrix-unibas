@@ -36,6 +36,10 @@ docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --
 echo "dumping maubot DB (bots, admin bot state)"
 docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d maubot --format=custom > "$STAGE_DIR/maubot.dump"
 
+echo "dumping userbots DB + plugin files"
+docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d userbots --format=custom > "$STAGE_DIR/userbots.dump"
+sudo rsync -a ./userbots/plugins "$STAGE_DIR/userbots_plugins"
+
 echo "syncing Synapse data + config + keys"
 rsync -a \
     "$DATA_DIR/media_store" \

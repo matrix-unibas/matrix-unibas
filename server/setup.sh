@@ -27,7 +27,8 @@ required_vars=(
   SYNAPSE_REGISTRATION_SHARED_SECRET SYNAPSE_MACAROON_SECRET_KEY
   SYNAPSE_FORM_SECRET SYNAPSE_TURN_SHARED_SECRET SYNAPSE_IMAGE_TAG SYNAPSE_HTTP_PORT SYNAPSE_REPORT_STATS
   ELEMENT_IMAGE_TAG ELEMENT_HTTP_PORT
-  ADMIN_UI_PORT MAUBOT_UI_PORT MAUBOT_ADMIN_PASSWORD
+  ADMIN_UI_PORT MAUBOT_UI_PORT MAUBOT_ADMIN_PASSWORD  MAUBOT_IMAGE_TAG
+  USERBOTS_ADMIN_PASSWORD USERBOTS_CRYPTO_PICKLE_KEY
 )
 for v in "${required_vars[@]}"; do
   if [ -z "${!v:-}" ]; then
@@ -95,6 +96,12 @@ sudo chown -R "$HOST_UID:$HOST_GID" ./maubot
 envsubst < "./maubot/config.yaml.template" > "./maubot/config.yaml"
 
 sudo chown -R 1337:1337 ./maubot
+
+echo "Rendering userbots config"
+mkdir -p ./userbots
+sudo chown -R "$HOST_UID:$HOST_GID" ./userbots
+envsubst < "./userbots/config.yaml.template" > "./userbots/config.yaml"
+sudo chown -R 1337:1337 ./userbots
 
 echo "Starting stack"
 docker compose up -d

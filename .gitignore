@@ -34,6 +34,9 @@ homeserver.yaml
 **/maubot/plugins/
 **/maubot/trash/
 **/maubot/logs/
+**userbots/config.yaml
+**userbots/plugins/
+**userbots/trash/
 *.mbp
 *.db
 *.db-journal

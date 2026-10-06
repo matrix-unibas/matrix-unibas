@@ -71,6 +71,18 @@ services:
     ports:
       - "127.0.0.1:${MAUBOT_UI_PORT}:29316"
 
+  userbots:
+    image: dock.mau.dev/maubot/maubot:${MAUBOT_IMAGE_TAG}   # must be the same tag as maubot
+    container_name: matrix-userbots
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      synapse:
+        condition: service_started
+    volumes:
+      - ./userbots:/data
+
   coturn:
     image: coturn/coturn:latest
     container_name: matrix-coturn
