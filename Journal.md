@@ -217,3 +217,25 @@ Ports opened manually in ufw on the VM (not possible via ALIS): `3478/tcp`, `347
 
 **Issue:** room video conferences work (they run via Element Call over Element's servers, not our coturn), but 1:1 calls have no audio/video. coturn runs and listens correctly, but: UDP never reaches the VM, and over TCP only the handshake arrives, coturn receives 0 bytes (checked with tcpdump). Same from uni network/VPN and from outside. So something between the clients and the VM (firewall) blocks STUN/TURN.
 -> Opened an ITS ticket to allow 3478/tcp+udp and 49152-49200/udp to the VM from uni network/VPN and internet.
+
+## 06.10.2026 - vs, nk, cj
+
+### Storage:
+- Grew `/` by 20 GB online (`sudo lvextend -r -L +20G /dev/sysvg/rootlv`): now 26 GB, 19 % used (was 6 GB, 81 %). VG `sysvg` has ~413 GB left unallocated.
+- `/var` (46 GB, 6 % used) left as is. Media and Synapse data are on `/MARVIN`, but the Postgres volume (`postgres_data`) and Docker images/logs are still in `/var/lib/docker`. Moving the Docker data-root to `/MARVIN` is still open.
+- Memory is fine: the 89 % in the monitoring includes page cache, `free -h` shows 1.5 GB used / 5.7 GB available.
+
+### Admin UI container removed:
+- Removed `synapse-admin` (Ketesa) from the stack, Ketesa runs locally (see `server/docs/admin_ui.md`). `nginx-admin` stays for the Maubot UI on 8443.
+
+### Synapse crash (Permission denied on the signing key):
+- After `docker compose up -d --remove-orphans` Synapse kept restarting: `Permission denied: '/data/matrix.dmi.unibas.ch.signing.key'`.
+- **Why:** `HOST_UID`/`HOST_GID` were only exported by `setup.sh`, not set in `.env`. A plain `docker compose up` fell back to UID 1000, recreated Synapse as that user, which can't read the files in `data/`.
+- **Fix:** on the VM, `HOST_UID`/`HOST_GID` (owner of `data/`) are now in `.env`. `setup.sh` now keeps these values from `.env` instead of overwriting them with `id -u`.
+
+### VoIP / coturn debugging:
+- Not Docker: coturn uses `network_mode: host`, and tcpdump sees packets before any firewall on the VM.
+- Clients from the uni network reach the VM via NAT as `10.3.3.14`.
+- TCP 3478: STUN request reaches coturn, coturn answers (40 bytes), but the answer never reaches the client (retransmitted again and again).
+- UDP 3478: a flow starting with arbitrary data (`hello`) gets through, including STUN packets after it. A flow starting with a STUN packet never reaches the VM.
+- -> The uni firewall filters STUN/TURN by content (application filtering), not by port.
