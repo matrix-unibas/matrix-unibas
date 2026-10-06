@@ -82,7 +82,7 @@ homeservers:
 # Root is a special user that can't have a password and will always exist.
 admins:
     root: ""
-    admin: ${USERBOTS_ADMIN_PASSWORD}
+    adminbot: ${USERBOTS_ADMIN_PASSWORD}
 
 # API feature switches.
 api_features:
@@ -90,11 +90,11 @@ api_features:
     plugin: true
     plugin_upload: true
     instance: true
-    instance_database: true
+    instance_database: false
     client: true
     client_proxy: false
-    client_auth: true
-    dev_open: true
+    client_auth: false
+    dev_open: false
     log: false
 
 # Python logging configuration.
