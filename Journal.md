@@ -240,7 +240,10 @@ Ports opened manually in ufw on the VM (not possible via ALIS): `3478/tcp`, `347
 - UDP 3478: a flow starting with arbitrary data (`hello`) gets through, including STUN packets after it. A flow starting with a STUN packet never reaches the VM.
 - -> The uni firewall filters STUN/TURN by content (application filtering), not by port.
 
-Meeting with Martin:
+### Element Web:
+- Element Web now served at `https://matrix.dmi.unibas.ch/` 
+
+### Meeting with Martin:
 Übersicht über verschiedene Möglichkeiten für Production:
 
 - Management, Sicherheit, Usability, Aufwand etc.
