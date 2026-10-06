@@ -58,7 +58,7 @@ services:
       - "127.0.0.1:${ELEMENT_HTTP_PORT}:80"
 
   maubot:
-    image: dock.mau.dev/maubot/maubot:latest
+    image: dock.mau.dev/maubot/maubot:${MAUBOT_IMAGE_TAG}
     container_name: matrix-maubot
     restart: unless-stopped
     depends_on:

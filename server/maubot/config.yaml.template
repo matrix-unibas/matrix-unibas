@@ -43,7 +43,7 @@ plugin_databases:
     # To view schemas in psql, use `\dn`. To view enter and interact with a specific schema,
     # use `SET search_path = name` (where `name` is the name found with `\dn`) and then use normal
     # SQL queries/psql commands.
-    postgres: null
+    postgres: default
     # Maximum number of connections per plugin instance.
     postgres_max_conns_per_plugin: 3
     # Overrides for the default database_opts when using a non-"default" postgres connection string.

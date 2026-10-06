@@ -33,6 +33,9 @@ mkdir -p "$STAGE_DIR"
 echo "dumping Postgres"
 docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom > "$STAGE_DIR/postgres.dump"
 
+echo "dumping maubot DB (bots, admin bot state)"
+docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d maubot --format=custom > "$STAGE_DIR/maubot.dump"
+
 echo "syncing Synapse data + config + keys"
 rsync -a \
     "$DATA_DIR/media_store" \

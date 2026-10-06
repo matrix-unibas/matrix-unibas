@@ -57,6 +57,13 @@ rsync -a --delete "$STAGE_DIR/media_store" "$DATA_DIR/"
 rsync -a "$STAGE_DIR/"*.signing.key "$DATA_DIR/"
 rsync -a "$STAGE_DIR/homeserver.yaml" "$DATA_DIR/"
 
+if [ -f "$STAGE_DIR/maubot.dump" ]; then
+  echo "Restoring maubot database"
+  docker compose stop maubot
+  docker compose exec -T postgres pg_restore -U "$POSTGRES_USER" -d maubot --clean --if-exists < "$STAGE_DIR/maubot.dump"
+  docker compose start maubot
+fi
+
 echo "Starting Synapse services"
 docker compose start synapse
 
