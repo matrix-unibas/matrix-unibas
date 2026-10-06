@@ -35,27 +35,11 @@ services:
     ports:
       - "127.0.0.1:${SYNAPSE_HTTP_PORT}:8008"
 
-  synapse-admin:
-    image: ghcr.io/etkecc/ketesa:latest
-    container_name: matrix-admin-ui
-    restart: unless-stopped
-    depends_on:
-      - synapse
-    environment:
-      - SERVER_HOST=0.0.0.0
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-    volumes:
-      - ./admin/config.json:/app/config.json:ro
-
   nginx-admin:
     image: nginx:alpine
     container_name: matrix-admin-nginx
     restart: unless-stopped
     depends_on:
-      - synapse-admin
       - synapse
     volumes:
       - ./nginx/admin.conf:/etc/nginx/conf.d/admin.conf:ro
