@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Terms and Conditions &amp; Privacy Policy – University of Basel Matrix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --card: #ffffff;
+      --border: #d0d7de;
+      --rule: #e1e4e8;
+      --text: #24292e;
+      --muted: #57606a;
+      --heading: #0f172a;
+      --subheading: #1e293b;
+      --box: #f8fafc;
+      --accent: #005a9c;
+      --accent-hover: #004273;
+      --info: #0284c7;
+      --ok-bg: #ecfdf5;
+      --ok-border: #a7f3d0;
+      --ok-text: #065f46;
+      --badge-bg: #e2e8f0;
+      --badge-text: #334155;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --card: #161b22;
+        --border: #30363d;
+        --rule: #30363d;
+        --text: #e6edf3;
+        --muted: #9da7b3;
+        --heading: #f0f6fc;
+        --subheading: #e6edf3;
+        --box: #1c222b;
+        --accent: #2f81c7;
+        --accent-hover: #3b94de;
+        --info: #4aa3df;
+        --ok-bg: #0f2a1f;
+        --ok-border: #1f5f45;
+        --ok-text: #7ee2b8;
+        --badge-bg: #2b3340;
+        --badge-text: #c9d4e0;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 36px 40px;
+    }
+    .header {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0 0 8px; color: var(--heading); font-size: 1.85rem; font-weight: 700; line-height: 1.25; }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin: 0; }
+    .badge {
+      display: inline-block;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin: 32px 0 12px;
+      color: var(--subheading);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 6px;
+    }
+    h3 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--subheading); }
+    p { margin: 10px 0; }
+    ul { padding-left: 22px; margin: 10px 0; }
+    li { margin-bottom: 8px; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      background: var(--box);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 1px 5px;
+      overflow-wrap: anywhere;
+    }
+    a { color: var(--accent); }
+    .info-box {
+      background: var(--box);
+      border-left: 4px solid var(--info);
+      padding: 12px 16px;
+      margin: 20px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.95rem;
+    }
+    .contact-box {
+      background: var(--box);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 0.95rem;
+    }
+    .contact-box p { margin: 4px 0; }
+    .notice-success {
+      background: var(--ok-bg);
+      border: 1px solid var(--ok-border);
+      color: var(--ok-text);
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+    .actions {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+    }
+    .actions p { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; }
+    .actions form { text-align: right; }
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:focus-visible, a:focus-visible { outline: 3px solid var(--info); outline-offset: 2px; }
+    @media (max-width: 640px) {
+      body { margin: 16px auto; }
+      .card { padding: 24px 18px; }
+      h1 { font-size: 1.5rem; }
+      .actions form { text-align: stretch; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="header">
+      <h1>Terms and Conditions &amp; Privacy Policy <span class="badge">v{{version}}</span></h1>
+      <p class="subtitle">University of Basel Matrix Homeserver Service</p>
+    </header>
+
+    {% if has_consented %}
+      <div class="notice-success" role="status">
+        <strong>You have already agreed to this version ({{version}}) of the terms.</strong>
+      </div>
+    {% endif %}
+
+    <p>
+      This homeserver provides communication and collaboration infrastructure for students, faculty, staff, researchers, and affiliated members of the University of Basel.
+    </p>
+
+    <div class="info-box">
+      By signing in to or using this service, you agree to these terms and to the University's IT regulations, in particular the <strong>Allgemeine Nutzungsbedingungen für die von den IT-Services angebotenen Dienste (ANBITS)</strong> and the <strong>Reglement über den Umgang mit universitären Informatikmitteln</strong> (Acceptable Use Policy).
+    </div>
+
+    <h2>1. Scope and Applicable Regulations</h2>
+    <p>
+      These terms govern the use of the Matrix homeserver operated within the University of Basel infrastructure. The service is subject to:
+    </p>
+    <ul>
+      <li><strong>ANBITS:</strong> General Terms of Use for IT Services offered by IT Services (ITS) of the University of Basel.</li>
+      <li><strong>Acceptable Use Policy:</strong> <em>Reglement über den Umgang mit universitären Informatikmitteln</em>, defining lawful, secure, and respectful use of computing resources.</li>
+      <li><strong>Information Security Regulations:</strong> <em>Informationssicherheitsordnung</em> and related directives, including the <em>Weisung zur Verwaltung persönlicher Zugangsberechtigungen</em> and the <em>Weisung zum Umgang mit Passwörtern</em>.</li>
+      <li><strong>Applicable Swiss Law:</strong> Cantonal and federal legislation, in particular concerning data protection, copyright, and criminal law.</li>
+    </ul>
+
+    <h2>2. Purpose and Acceptable Use</h2>
+    <ul>
+      <li><strong>Primary purpose:</strong> The service supports teaching, academic research, studies, official university business, and administrative collaboration.</li>
+      <li><strong>Incidental personal use:</strong> Reasonable personal communication is tolerated as long as it does not hinder official duties, does not overburden resources, and complies with university policies.</li>
+      <li><strong>No commercial use:</strong> Unauthorized commercial purposes, external paid advertising, and personal financial gain are prohibited.</li>
+      <li><strong>Lawful and respectful conduct:</strong> You must not transmit, share, or store content that is unlawful, defamatory, abusive, harassing, threatening, discriminatory (on grounds of race, gender, religion, origin, or orientation), or sexually explicit or pornographic.</li>
+      <li><strong>System integrity:</strong> You must not send unsolicited mass messages (spam), distribute malware, perform unauthorized vulnerability scans or penetration tests, or disrupt servers and network infrastructure.</li>
+      <li><strong>Copyright:</strong> You are responsible for ensuring that files, publications, source code, and media you share respect copyright law (<em>Urheberrecht</em>) and applicable licenses.</li>
+    </ul>
+
+    <h2>3. Account Security and User Obligations</h2>
+    <ul>
+      <li><strong>Personal accounts:</strong> Your account is personal and non-transferable. Sign-in uses your University identity (Switch edu-ID); this service does not store your edu-ID password. Never disclose your credentials, recovery key, or access tokens to anyone.</li>
+      <li><strong>Password rules:</strong> The password requirements of your identity provider and the University's IT regulations apply.</li>
+      <li><strong>Device security:</strong> Protect your devices against unauthorized access and malware.</li>
+      <li><strong>Duty to report:</strong> If you suspect that your account, sessions, or encryption keys are compromised, sign out of all devices, change your password, and immediately inform IT administration at [ITS / MARVIN contact address].</li>
+    </ul>
+
+    <h2>4. Privacy and Data Protection</h2>
+    <p>
+      The University of Basel processes personal data in accordance with the <strong>Information and Data Protection Act of the Canton of Basel-Stadt (IDG Basel-Stadt, SG 153.260)</strong>, the <strong>Swiss Federal Act on Data Protection (FADP/DSG)</strong>, and, where applicable, the EU General Data Protection Regulation (GDPR).
+    </p>
+
+    <h3>Data processed</h3>
+    <ul>
+      <li><strong>Account details:</strong> Matrix user ID (e.g. <code>@username:matrix.dmi.unibas.ch</code>), display name, and the attributes your identity provider transmits at sign-in (such as name and email address, as released by Switch edu-ID).</li>
+      <li><strong>Connection and protocol data:</strong> IP addresses, timestamps, device names and session identifiers, room membership events, presence and read receipts, and error logs. This data is needed for technical operation, security, and abuse handling. Logs are kept only as long as these purposes require.</li>
+      <li><strong>Message content:</strong> In end-to-end encrypted rooms, messages, attachments, and calls are encrypted on your devices and only room members hold the keys; server operators cannot read this content. Room settings determine whether a room is encrypted. In unencrypted rooms, message events are stored on the server and are technically accessible to server administrators.</li>
+      <li><strong>No federation:</strong> This server is not connected to other Matrix servers. Your messages are not forwarded outside this service.</li>
+      <li><strong>Push notifications:</strong> If you enable push notifications in a mobile app, notification metadata is delivered through the app vendor's push gateway and Apple or Google. Message content of encrypted rooms is not included.</li>
+    </ul>
+
+    <h3>Retention and backups</h3>
+    <ul>
+      <li><strong>Your responsibility:</strong> In accordance with ANBITS, you are responsible for archiving and backing up important academic data, research materials, and documents yourself.</li>
+      <li><strong>System backups:</strong> Server backups may be made for disaster recovery and operational continuity. They are not an individual archive service, and individual messages or files cannot be restored on request.</li>
+      <li><strong>Media:</strong> Uploaded media and caches may be removed automatically under retention limits.</li>
+    </ul>
+
+    <h3>Your rights and contact</h3>
+    <p>
+      Subject to statutory requirements, you may request access to your stored personal data, correction of inaccurate data, or deletion of your account data where this is not prohibited by law or operational requirements.
+    </p>
+    <div class="contact-box">
+      <p><strong>Data Protection Officer of the University of Basel</strong></p>
+      <p>Datenschutzbeauftragte*r der Universität Basel</p>
+      <p>Petersgraben 35, Postfach, 4051 Basel, Switzerland</p>
+      <p>Email: <a href="mailto:datenschutz@unibas.ch">datenschutz@unibas.ch</a></p>
+    </div>
+
+    <h2>5. Monitoring and Account Suspension</h2>
+    <ul>
+      <li><strong>Operational audits:</strong> In accordance with ANBITS and the Acceptable Use Policy, administrators may review system logs and investigate technical anomalies to keep the service stable, prevent security threats, and investigate suspected abuse.</li>
+      <li><strong>Sanctions:</strong> If you breach these terms or university regulations, or if your account poses an immediate security threat, access may be restricted, suspended, or terminated with immediate effect. Disciplinary measures and legal action under Swiss law remain reserved.</li>
+    </ul>
+
+    <h2>6. Disclaimer and Limitation of Liability</h2>
+    <p>
+      The service is provided "as is" and "as available", without warranty of uninterrupted availability, freedom from errors, or any specific data retention. To the extent permitted by Swiss law, the University of Basel is not liable for direct, indirect, or consequential damages resulting from downtime, data loss, transmission delays, or the actions of users.
+    </p>
+
+    <h2>7. Amendments</h2>
+    <p>
+      The University of Basel may update these terms to reflect organizational, regulatory, or technical changes. After a new version is published, you must agree to it again to keep using the service.
+    </p>
+
+    {% if not has_consented and not public_version %}
+      <div class="actions">
+        <p>By selecting the button below you confirm that you have read and accept these terms.</p>
+        <!-- The form is only rendered when a user-specific consent token is provided -->
+        <form method="post" action="consent">
+          <input type="hidden" name="v" value="{{version}}"/>
+          <input type="hidden" name="u" value="{{user}}"/>
+          <input type="hidden" name="h" value="{{userhmac}}"/>
+          <input type="submit" class="btn" value="I agree to the Terms and Conditions"/>
+        </form>
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>
