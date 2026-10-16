@@ -11,4 +11,4 @@ This project is the Matrix Academic Real-time, Versatile Instant-messaging Netwo
 | maubot UI, manual bots | [server/docs/maubot.md](server/docs/maubot.md) |
 | Admin bot: server setup, professor bots | [server/docs/admin-bot-setup.md](server/docs/admin-bot-setup.md) |
 | Admin bot: code, development, testing | [adminBot](https://github.com/Noah-Klaholz/adminBot) (separate repository) |
-| Project log | [Journal.md](Journal.md) |
+| Project log | [Journal.md](docs/Journal.md) |
