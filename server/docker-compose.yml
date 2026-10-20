@@ -106,5 +106,20 @@ services:
       - "7881:7881"
       - "50000-50200:50000-50200/udp"
 
+  lk-jwt-service:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: matrix-lk-jwt
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_JWT_PORT=8080
+      - LIVEKIT_URL=wss://${LIVEKIT_SUBDOMAIN}
+      - LIVEKIT_KEY=${LIVEKIT_KEY}
+      - LIVEKIT_SECRET=${LIVEKIT_SECRET}
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=${SERVER_NAME}
+    depends_on:
+      - livekit
+    ports:
+      - "127.0.0.1:8090:8080"
+
 volumes:
   postgres_data:

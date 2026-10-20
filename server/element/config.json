@@ -9,5 +9,17 @@
   "disable_guests": true,
   "brand": "MARVIN",
   "default_theme": "light",
-  "show_labs_settings": false
+  "show_labs_settings": false,
+
+  "element_call": {
+    "url": "https://call.element.io",
+    "use_exclusively": true,
+    "participant_limit": 8,
+    "brand": "Element Call"
+  },
+  "features": {
+    "feature_group_calls": true,
+    "feature_video_rooms": true,
+    "feature_element_call_video_rooms": true
+  }
 }

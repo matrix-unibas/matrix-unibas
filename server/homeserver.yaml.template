@@ -76,6 +76,12 @@ matrix_rtc:
     - type: livekit
       livekit_service_url: "https://${LIVEKIT_SUBDOMAIN}"
 
+# MSC4140: Delayed events used during call setup/teardown
+max_event_delay_duration: "24h"
+
+rc_delayed_event_mgmt:
+  per_second: 1
+  burst_count: 20
+
 enable_registration: true
 registration_requires_token: true
-
