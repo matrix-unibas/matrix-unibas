@@ -94,5 +94,17 @@ services:
     volumes:
       - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
 
+  livekit:
+    image: livekit/livekit-server:${LIVEKIT_IMAGE_TAG:-latest}
+    container_name: matrix-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "127.0.0.1:7880:7880"
+      - "7881:7881"
+      - "50000-50200:50000-50200/udp"
+
 volumes:
   postgres_data:

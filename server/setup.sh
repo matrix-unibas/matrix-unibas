@@ -10,6 +10,8 @@ ADMIN_CONFIG_TEMPLATE="./admin/config.json.template"
 ADMIN_CONFIG_OUT="./admin/config.json"
 COTURN_CONFIG_TEMPLATE="./coturn/turnserver.conf.template"
 COTURN_CONFIG_OUT="./coturn/turnserver.conf"
+LIVEKIT_CONFIG_TEMPLATE="./livekit/livekit.yaml.template"
+LIVEKIT_CONFIG_OUT="./livekit/livekit.yaml"
 CERT_DIR="./nginx/certs"
 CERT_FILE="$CERT_DIR/admin-selfsigned.crt"
 KEY_FILE="$CERT_DIR/admin-selfsigned.key"
@@ -29,6 +31,7 @@ required_vars=(
   ELEMENT_IMAGE_TAG ELEMENT_HTTP_PORT
   ADMIN_UI_PORT MAUBOT_UI_PORT MAUBOT_ADMIN_PASSWORD  MAUBOT_IMAGE_TAG
   USERBOTS_ADMIN_PASSWORD USERBOTS_CRYPTO_PICKLE_KEY
+  LIVEKIT_SUBDOMAIN LIVEKIT_KEY LIVEKIT_SECRET
 )
 for v in "${required_vars[@]}"; do
   if [ -z "${!v:-}" ]; then
@@ -79,6 +82,10 @@ echo "Rendering Coturn turnserver.conf from template"
 mkdir -p ./coturn
 envsubst < "$COTURN_CONFIG_TEMPLATE" > "$COTURN_CONFIG_OUT"
 
+echo "Rendering LiveKit livekit.yaml from template"
+mkdir -p ./livekit
+envsubst < "$LIVEKIT_CONFIG_TEMPLATE" > "$LIVEKIT_CONFIG_OUT"
+
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
   echo "No admin UI TLS cert found, generating a self-signed one"
   openssl req -x509 -newkey rsa:4096 -nodes \
@@ -117,6 +124,8 @@ done
 
 echo "Synapse is up: http://localhost:${SYNAPSE_HTTP_PORT}"
 echo "Element is up: https://${SERVER_NAME}/ (container on localhost:${ELEMENT_HTTP_PORT})"
+echo "LiveKit is up: https://${LIVEKIT_SUBDOMAIN} (container on localhost:7880)"
 echo "Admin UI is up: https://localhost:${ADMIN_UI_PORT} (reach it via: ssh -L ${ADMIN_UI_PORT}:localhost:${ADMIN_UI_PORT} <vm-host>)"
 echo "Create an admin user with:"
 echo "docker compose exec synapse register_new_matrix_user -c /data/homeserver.yaml -a http://localhost:8008"
+

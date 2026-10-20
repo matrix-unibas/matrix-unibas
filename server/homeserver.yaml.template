@@ -64,5 +64,18 @@ turn_shared_secret: "${SYNAPSE_TURN_SHARED_SECRET}"
 turn_user_lifetime: 2h
 turn_allow_guests: false
 
+# LiveKit / MatrixRTC
+experimental_features:
+  # MSC4143: Matrix RTC Transport using Livekit Backend
+  msc4143_enabled: true
+  # MSC4222: syncv2 state_after support for call state tracking
+  msc4222_enabled: true
+
+matrix_rtc:
+  transports:
+    - type: livekit
+      livekit_service_url: "https://${LIVEKIT_SUBDOMAIN}"
+
 enable_registration: true
 registration_requires_token: true
+

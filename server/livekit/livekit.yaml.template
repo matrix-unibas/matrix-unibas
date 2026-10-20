@@ -1,0 +1,13 @@
+# LiveKit server configuration for MatrixRTC
+# Rendered from livekit.yaml.template by setup.sh
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50200
+  use_external_ip: false
+  node_ip: "${TURN_PUBLIC_IP}"
+
+keys:
+  ${LIVEKIT_KEY}: "${LIVEKIT_SECRET}"
