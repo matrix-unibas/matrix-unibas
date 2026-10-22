@@ -52,6 +52,12 @@ denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 # Needed when both callers can only use relay candidates (e.g. VPN without UDP).
 allowed-peer-ip=${TURN_PUBLIC_IP}
 
+# University clients (eduroam, WLAN, VPN) have private 10.x addresses and reach
+# the VM without NAT, so the relay must be allowed to send to them. Without this
+# coturn logs "peer IP 10.x.x.x denied" and calls connect without audio/video.
+# Overrides the 10.0.0.0/8 deny above; narrow to the client ranges if ITS provides them.
+allowed-peer-ip=10.0.0.0-10.255.255.255
+
 # Limit relayed streams to avoid abuse (4 streams per video call)
 user-quota=12
 total-quota=1200
