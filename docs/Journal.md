@@ -289,3 +289,45 @@ Ports opened manually in ufw on the VM (not possible via ALIS): `3478/tcp`, `347
 - **Proper testing of the admin bot** on the test node: run the full level-4 checklist from the bot README (E2EE DMs, file uploads, signup page, interrupted jobs, archive/rollover, professor bots), with real professor/TA/student test accounts.
 - **Usage guide** for professors and TAs (phase 9): how to create a course, invite students, use signup links, groups, templates, own bots. Plus an admin runbook.
 - **More informative help:** `!help` only lists one usage line per command, and there is no `!help <command>` yet. Add `!help <command>` with a longer description, the options and an example per command.
+
+## 20.-22.10.2026 - cj
+
+### VoIP (1:1 Calls via Coturn) working:
+- Legacy 1:1 audio and video calls over Coturn (STUN/TURN) are now functioning properly. The firewall / network routing issues previously blocking media relay between clients have been resolved.
+
+### LiveKit / MatrixRTC (Element Call):
+Attempted to set up LiveKit as the WebRTC SFU for native MatrixRTC group calls and video rooms (MSC4143 / MSC4222).
+
+#### What was added:
+- **LiveKit Server (`docker-compose.yml`)**: Added the `livekit` service (`livekit/livekit-server:latest`) running with `server/livekit/livekit.yaml` rendered from `server/livekit/livekit.yaml.template`. Ports: `127.0.0.1:7880` (API/WS), `7881` (TCP fallback), `50000-50200/udp` (RTC media).
+- **Environment & Setup**: Added `LIVEKIT_SUBDOMAIN`, `LIVEKIT_KEY`, and `LIVEKIT_SECRET` to `.env.example`, `create_env.sh`, and `setup.sh`.
+- **Nginx Reverse Proxy (`server/nginx/matrix.conf`)**: Added a server block for `livekit.matrix.dmi.unibas.ch` (and `livekit.dmi.unibas.ch`) with WebSocket upgrade support, TLS certificates, and long proxy timeouts.
+- **Synapse Config (`homeserver.yaml.template`)**: Enabled experimental flags `msc4143_enabled: true`, `msc4222_enabled: true`, and added `matrix_rtc.transports` pointing to `https://${LIVEKIT_SUBDOMAIN}`.
+
+#### Problems identified & fixed:
+1. **Missing JWT Token Service (`lk-jwt-service`)**:
+   - LiveKit itself is only the media SFU; MatrixRTC requires an authentication/authorization bridge to mint signed LiveKit JWTs for Matrix clients.
+   - Added `lk-jwt-service` (`ghcr.io/element-hq/lk-jwt-service:latest`) to `docker-compose.yml`, listening locally on port 8090.
+   - Added Nginx routing for `/sfu/get` and `/healthz` on the LiveKit vhost forwarding to `http://127.0.0.1:8090`.
+2. **Missing Element Web configuration (`server/element/config.json`)**:
+   - Element Web had no MatrixRTC / Element Call configuration and did not recognize group calls.
+   - Added `element_call` config (`url: "https://call.element.io"`) and feature flags (`feature_group_calls`, `feature_video_rooms`, `feature_element_call_video_rooms`).
+3. **LiveKit ICE candidates / Public IP (`server/livekit/livekit.yaml.template`)**:
+   - `use_external_ip` was initially set to `false`, causing LiveKit to advertise internal Docker container IPs in ICE candidates rather than the public `node_ip` (`TURN_PUBLIC_IP`). Set to `true`.
+4. **Synapse Delayed Events (MSC4140)**:
+   - Added `max_event_delay_duration: "24h"` and rate-limiting rules (`rc_delayed_event_mgmt`) in `homeserver.yaml.template` for call state lifecycle management.
+5. **Firewall rules (UFW)**:
+   - Required open ports on the VM:
+     - `sudo ufw allow 50000:50200/udp comment 'LiveKit WebRTC media'`
+     - `sudo ufw allow 7881/tcp comment 'LiveKit RTC TCP fallback'`
+
+#### Current status:
+- The full backend stack (Coturn, LiveKit, `lk-jwt-service`, Synapse MatrixRTC, and Nginx reverse proxy) is configured.
+- Element Call was temporarily disabled (`disable: true`) during testing to ensure legacy 1:1 calls remained stable on the verified Coturn path, and subsequently re-enabled in `config.json` for further testing.
+
+### Next steps:
+- Verify end-to-end Element Call group audio/video with multiple participants over the LiveKit SFU.
+- Ensure the TLS certificate covers `livekit.matrix.dmi.unibas.ch` without warnings.
+- Monitor LiveKit container logs and ICE connectivity under different network conditions (VPN, Eduroam, external).
+
+!!!!! calls not working any more idk why!!!!
