@@ -9,6 +9,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # only read by postgres-init.sh on a fresh volume (role of the userbots maubot, I12)
+      - USERBOTS_DB_PASSWORD=${USERBOTS_DB_PASSWORD}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
     volumes:
       - postgres_data:/var/lib/postgresql/data

@@ -2,7 +2,8 @@
 # Format examples:
 #   SQLite:   sqlite:filename.db
 #   Postgres: postgresql://username:password@hostname/dbname
-database: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/userbots
+# Its own unprivileged role (I12), never the superuser: plugins can read this file and use the connection.
+database: postgres://userbots:${USERBOTS_DB_PASSWORD}@postgres/userbots
 crypto_db_pickle_key: ${USERBOTS_CRYPTO_PICKLE_KEY}
 
 # Separate database URL for the crypto database. "default" means use the same database as above.

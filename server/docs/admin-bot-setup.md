@@ -19,10 +19,11 @@ Run every step on the test node first, then on the ITS VM.
 | 5 | Bot account, client, instance | none (manual steps) | Phase 0 | none |
 | 6 | Switch off open registration | `homeserver.yaml.template` | **after** Phase 3 works | Synapse restart (seconds) |
 | 7 | Second maubot for professor bots | compose, `userbots/config.yaml.template`, `setup.sh`, `.env`, `create_env.sh`, `postgres-init.sh`, backup scripts, `.gitignore` | Phase 8 | one new container, others untouched |
+| 8 | Own Postgres role for the professor bots' maubot | `postgres-init.sh`, compose, `userbots/config.yaml.template`, `.env`, `create_env.sh`, `setup.sh`, `restore.sh` | **before professors upload bots** (plugin 1.1.0) | `userbots` stopped for about a minute, others untouched |
 
-Changes 1–4 and 7 are in the repo. 6 is a separate, later change.
+Changes 1–4, 7 and 8 are in the repo. 6 is a separate, later change.
 
-On a **fresh install** (`create_env.sh` + `setup.sh` on an empty server) 1–3 and 7 come with the repo, and only the manual steps (5, 7.4) and the checks are needed. The sections below also cover upgrading a running server.
+On a **fresh install** (`create_env.sh` + `setup.sh` on an empty server) 1–3, 7 and 8 come with the repo, and only the manual steps (5, 7.4) and the checks are needed. The sections below also cover upgrading a running server.
 
 ---
 
@@ -63,7 +64,7 @@ docker manifest inspect dock.mau.dev/maubot/maubot:v0.6.0 >/dev/null && echo "ta
 
 `backup.sh` dumps, next to the Synapse database:
 - the `maubot` database (courses, staff, templates, signup tokens, the admin bot's config and access token)
-- once Phase 8 is set up: the `userbots` database and the files in `userbots/plugins/` (the only copy of professors' plugins; the admin bot deletes its copy after provisioning). This part is skipped while the `userbots` database doesn't exist.
+- once Phase 8 is set up: the `userbots` database and the files in `userbots/plugins/` (the plugins as maubot runs them; since plugin 1.1.0 the admin bot also keeps a copy of each bot's running package in its own database, to show admins the changes of an update). This part is skipped while the `userbots` database doesn't exist.
 
 `restore.sh` restores each part only if the backup contains it, so older backups stay restorable.
 
@@ -189,7 +190,7 @@ The admin API still creates accounts, both for the bot and for Ketesa. Only self
 Professors upload a plugin (`.mbp`) to the admin bot. After an admin approves it, the admin bot creates the Matrix account, the maubot client and the instance by itself. Design and reasoning: bot repo `claude.md` §10.
 
 **Why a second maubot:** maubot plugins run unsandboxed in the maubot process and can read every client's access token. A professor plugin in the main maubot could take the admin bot's server-admin token. So professor bots run in `userbots`:
-- its own container (`matrix-userbots`) and database (`userbots`)
+- its own container (`matrix-userbots`) and database (`userbots`), reached with its **own Postgres role** `userbots` that can't connect to any other database (section 8). Plugins can read the maubot's config file and use its database connection, so with the superuser they could read Synapse's database and the admin bot's token.
 - **no published port**: only the admin bot reaches it, over the Docker network at `http://userbots:29316`
 - one login, `adminbot`, used only by the admin bot
 - no `registration_secrets`; `client_auth`, `client_proxy`, `dev_open`, `instance_database` and `log` are off
@@ -202,11 +203,11 @@ The admin bot refuses to provision bots if `user_bots.maubot_url` points at the 
 | File | Content |
 |---|---|
 | `docker-compose.yml` | service `userbots`: same `${MAUBOT_IMAGE_TAG}`, volume `./userbots:/data`, no `ports:` |
-| `userbots/config.yaml.template` | database `.../userbots`, `plugin_databases.postgres: default`, pickle key `${USERBOTS_CRYPTO_PICKLE_KEY}`, `admins: adminbot: ${USERBOTS_ADMIN_PASSWORD}`, the API switches above |
-| `.env.example`, `create_env.sh` | `USERBOTS_ADMIN_PASSWORD`, `USERBOTS_CRYPTO_PICKLE_KEY` (generated for new `.env` files) |
-| `setup.sh` | requires both variables, renders `userbots/config.yaml`, `chown 1337` |
-| `postgres-init.sh` | creates the `userbots` database, **only on a fresh Postgres volume** |
-| `backup.sh`, `restore.sh` | `userbots` database + plugin files (section 3) |
+| `userbots/config.yaml.template` | database `postgres://userbots:${USERBOTS_DB_PASSWORD}@postgres/userbots` (own role, section 8), `plugin_databases.postgres: default`, pickle key `${USERBOTS_CRYPTO_PICKLE_KEY}`, `admins: adminbot: ${USERBOTS_ADMIN_PASSWORD}`, the API switches above |
+| `.env.example`, `create_env.sh` | `USERBOTS_ADMIN_PASSWORD`, `USERBOTS_CRYPTO_PICKLE_KEY`, `USERBOTS_DB_PASSWORD` (generated for new `.env` files) |
+| `setup.sh` | requires the three variables, renders `userbots/config.yaml`, `chown 1337` |
+| `postgres-init.sh` | creates the role `userbots` and its database, closes the other databases to everyone but their owners; **only on a fresh Postgres volume** (`postgres` gets `USERBOTS_DB_PASSWORD` for this) |
+| `backup.sh`, `restore.sh` | `userbots` database + plugin files (section 3); `restore.sh` restores it as the role `userbots` |
 | `.gitignore` | `**/userbots/config.yaml`, `**/userbots/plugins/`, `**/userbots/trash/` |
 
 ### 7.2 Roll out on a running server
@@ -218,13 +219,21 @@ cd server
 # 1. Secrets. create_env.sh won't touch an existing .env, so append them once:
 grep -q '^USERBOTS_ADMIN_PASSWORD=' .env    || echo "USERBOTS_ADMIN_PASSWORD=$(openssl rand -hex 32)" >> .env
 grep -q '^USERBOTS_CRYPTO_PICKLE_KEY=' .env || echo "USERBOTS_CRYPTO_PICKLE_KEY=$(openssl rand -hex 32)" >> .env
+grep -q '^USERBOTS_DB_PASSWORD=' .env       || echo "USERBOTS_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
 
 # 2. Backup (skips the userbots part, the database doesn't exist yet)
 ./backup.sh
 
-# 3. Database. Must exist BEFORE the container starts. Never `docker compose down -v`.
+# 3. Role and database (section 8). Must exist BEFORE the container starts. Never `docker compose down -v`.
 set -a; source .env; set +a
-docker compose exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'CREATE DATABASE userbots'
+docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+  -v userbots_pw="$USERBOTS_DB_PASSWORD" -v main_db="$POSTGRES_DB" <<'EOSQL'
+CREATE ROLE userbots LOGIN PASSWORD :'userbots_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+CREATE DATABASE userbots OWNER userbots;
+REVOKE CONNECT, TEMPORARY ON DATABASE :"main_db" FROM PUBLIC;
+REVOKE CONNECT, TEMPORARY ON DATABASE maubot FROM PUBLIC;
+REVOKE CONNECT, TEMPORARY ON DATABASE postgres FROM PUBLIC;
+EOSQL
 
 # 4. Render the config and start the new container (the others stay as they are)
 ./setup.sh
@@ -297,7 +306,8 @@ Test with a **non-admin** professor. Requests from admins are approved automatic
 | See all professor bots | `!bot list` (as admin: every bot; `!bot list @owner:server` for one person) |
 | Manage one bot | `!bot info\|stop\|start\|config\|delete <bot>`: the bot's name, `@owner:server <name>`, or its account `@bot.<owner>.<name>:server` (plugin 0.3.1) |
 | Stop all professor bots now | `!admin bots disable-all` (they stay set up) |
-| Delete all professor bots | `!bot delete all` (or `all @owner:server`), then `!confirm`; deactivates every bot account, never the admin bot |
+| Look at a request's code | `!admin bots show <id>`: the `.mbp`, for an update the `.diff` against the running version, and every finding of the static check (plugin 1.1.0) |
+| Delete all professor bots | `!bot delete all` (or `all @owner:server`), then `!confirm`; logs out and locks every bot account (plugin 1.1.0; before: deactivated), never the admin bot |
 | Switch the feature off | `user_bots.enabled: false` in the admin bot config; bot commands are refused |
 | Logs | `docker compose logs -f userbots` |
 | Look into userbots directly (debugging only) | It has no published port. Tunnel to the container: `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' matrix-userbots` on the VM, then `ssh -L 29317:<ip>:29316 <vm>` and open `http://localhost:29317/_matrix/maubot/` (user `adminbot`, `$USERBOTS_ADMIN_PASSWORD`). Don't create, change or delete bots there: the admin bot's DB wouldn't know, and deleted bots' accounts would stay active. |
@@ -306,6 +316,82 @@ Test with a **non-admin** professor. Requests from admins are approved automatic
 Remaining risk: professor bots share one process with each other, so a malicious plugin could read another professor bot's token. Those are unprivileged accounts. Approval, the quota and the kill switch are the mitigations.
 
 ---
+
+## 8. Own Postgres role for the professor bots' maubot
+
+**Why:** until now `userbots` connected to Postgres as `${POSTGRES_USER}`, the superuser that owns the `synapse` and `maubot` databases. Professor plugins run unsandboxed in that maubot: they can read `/data/config.yaml` and use its database connection. With the superuser a plugin could read every access token and password hash in Synapse's database, take the admin bot's server-admin token from the `maubot` database, and run shell commands in the Postgres container (`COPY ... FROM PROGRAM`). That voids the separation of section 7.
+
+**Fix:** a role `userbots` (no superuser, can't create databases or roles) that owns only the `userbots` database. `CONNECT` on `synapse`, `maubot` and `postgres` is taken away from everyone but their owners. Synapse, the main maubot, the backups and Ketesa keep using the superuser and are not affected.
+
+**On a fresh install** nothing extra is needed: `postgres-init.sh` sets it up. On a server that already runs `userbots` (all steps tested on a copy of that state):
+
+```bash
+cd /MARVIN/matrix-unibas && git pull
+cd server
+./backup.sh
+
+# 1. Password into .env, load it
+grep -q '^USERBOTS_DB_PASSWORD=' .env || echo "USERBOTS_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
+set -a; source .env; set +a
+
+# 2. Stop the professor bots, dump their database without owners and grants
+docker compose stop userbots
+docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d userbots --no-owner --no-privileges > ~/userbots.sql
+wc -l ~/userbots.sql          # must not be empty
+
+# 3. Role, a fresh database owned by it, close the other databases
+docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+  -v userbots_pw="$USERBOTS_DB_PASSWORD" -v main_db="$POSTGRES_DB" <<'EOSQL'
+CREATE ROLE userbots LOGIN PASSWORD :'userbots_pw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+DROP DATABASE userbots;
+CREATE DATABASE userbots OWNER userbots;
+REVOKE CONNECT, TEMPORARY ON DATABASE :"main_db" FROM PUBLIC;
+REVOKE CONNECT, TEMPORARY ON DATABASE maubot FROM PUBLIC;
+REVOKE CONNECT, TEMPORARY ON DATABASE postgres FROM PUBLIC;
+EOSQL
+
+# 4. Restore AS the new role, so it owns every table and plugin schema
+docker compose exec -T postgres psql -U userbots -d userbots -v ON_ERROR_STOP=1 < ~/userbots.sql
+
+# 5. Render the userbots config with the new role, start it
+envsubst < ./userbots/config.yaml.template | sudo tee ./userbots/config.yaml >/dev/null
+sudo chown 1337:1337 ./userbots/config.yaml
+docker compose start userbots
+docker compose logs --tail 50 userbots        # no database errors
+```
+
+- The quoted heredoc (`<<'EOSQL'`) keeps the password away from the shell; psql inserts it (`:'userbots_pw'`).
+- Step 4 connects over the container's local socket, which the Postgres image trusts, so no password is asked.
+- Step 5 replaces maubot's generated `unshared_secret` (as in 7.2); the admin bot logs in again by itself.
+- The new `USERBOTS_DB_PASSWORD` line in `docker-compose.yml` only matters for a fresh Postgres volume. There is no need to recreate the `postgres` container now; the next `docker compose up -d` restarts it briefly, which is harmless.
+
+**Check:**
+
+```bash
+# The role can't get into the other databases: "User does not have CONNECT privilege."
+docker compose exec -T postgres psql -U userbots -d "$POSTGRES_DB" -c 'select 1'
+docker compose exec -T postgres psql -U userbots -d maubot -c 'select 1'
+# Not a superuser: f
+docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "select rolsuper from pg_roles where rolname='userbots'"
+# Everything in userbots belongs to it: only "userbots"
+docker compose exec -T postgres psql -U "$POSTGRES_USER" -d userbots -tAc \
+  "select distinct tableowner from pg_tables where schemaname not in ('pg_catalog','information_schema')"
+# The config uses the role: postgres://userbots:...
+sudo grep '^database:' ./userbots/config.yaml
+```
+
+In Matrix: `!bot list` and `!bot info <bot>` show the bots running. Saving the admin bot's instance config re-runs its startup check; a passing `userbots` check is silent.
+
+**Then:**
+
+```bash
+shred -u ~/userbots.sql       # contains the bots' access tokens
+./backup.sh
+```
+
+If plugins you don't trust have ever run with the old setup, also change `POSTGRES_PASSWORD` (Synapse and the main maubot use it). On a closed system with only your own test plugins that is not needed.
+
+What remains: `userbots/config.yaml` also holds `USERBOTS_ADMIN_PASSWORD`, so a plugin can manage the *other professor bots* through the userbots API. That is the known risk of section 7 (professor bots share one process); approval and the kill switch are the mitigations.
 
 ## Troubleshooting
 
@@ -340,3 +426,4 @@ These came up in the plan review, but aren't needed and would touch more of the 
 | 5 | Stop/delete the instance in the maubot UI. Deactivate `@adminbot` in Ketesa. |
 | 6 | Revert the template, `./setup.sh && docker compose restart synapse`. |
 | 7 | `!admin bots disable-all`, `user_bots.enabled: false`, `docker compose stop userbots`. Removing it completely: revert the repo changes and `docker compose up -d --remove-orphans`. The `userbots` database stays, unused. |
+| 8 | Not recommended (it reopens the hole). If the bots don't start with the new role: revert the `database:` line in `userbots/config.yaml.template`, re-render it as in step 5 of section 8, `docker compose restart userbots`. The superuser can still use the database; the role and the `REVOKE`s can stay. |
