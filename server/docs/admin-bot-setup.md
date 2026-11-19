@@ -70,6 +70,8 @@ docker manifest inspect dock.mau.dev/maubot/maubot:v0.6.0 >/dev/null && echo "ta
 
 **Note:** backups now hold the maubot clients' access tokens, including the admin bot's server-admin token. They already held Synapse's tokens and password hashes, so treat backups like `.env`.
 
+Since 2026-11-20 `backup.sh` runs with `umask 077` and sets `backup/` to `700`: backups are readable by root only (before, every account on the VM could read them, mode `644`). Run both scripts as root: `sudo -i`, then `bash ./backup.sh` / `bash ./restore.sh backup/<file>.tar`. Restoring is unchanged: the tar keeps each file's original mode (checked with a backup-and-restore run), and as root also its owner. To copy a backup off the VM, copy it as root to a place only you can read, and keep it as protected as `.env`.
+
 ## 4. Public route for the signup pages
 
 Host nginx sends everything under `/_matrix` to Synapse. maubot only listens on `127.0.0.1:29316`. We expose **only** the bot's webapp prefix. The maubot UI and management API (`/_matrix/maubot/v1/...`) stay unreachable from outside.
@@ -326,9 +328,12 @@ Remaining risk: professor bots share one process with each other, so a malicious
 **On a fresh install** nothing extra is needed: `postgres-init.sh` sets it up. On a server that already runs `userbots` (all steps tested on a copy of that state):
 
 ```bash
-cd /MARVIN/matrix-unibas && git pull
-cd server
-./backup.sh
+cd /MARVIN/matrix-unibas && git pull     # as yourself, not root (see Troubleshooting if it fails)
+sudo -i                                  # .env is readable by its owner only
+cd /MARVIN/matrix-unibas/server
+bash ./backup.sh                         # bash: the script isn't executable in git
+# backup.sh keeps only ONE backup; this copy survives the next run
+cp "$(ls -1t backup/synapse_backup_*.tar | head -1)" ~/before-i12.tar
 
 # 1. Password into .env, load it
 grep -q '^USERBOTS_DB_PASSWORD=' .env || echo "USERBOTS_DB_PASSWORD=$(openssl rand -hex 32)" >> .env
@@ -337,7 +342,9 @@ set -a; source .env; set +a
 # 2. Stop the professor bots, dump their database without owners and grants
 docker compose stop userbots
 docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d userbots --no-owner --no-privileges > ~/userbots.sql
-wc -l ~/userbots.sql          # must not be empty
+# Must print 1. Anything else (0, "No such file"): STOP, nothing is changed yet.
+# Step 3 drops the database, so it must only run after a complete dump.
+grep -c 'PostgreSQL database dump complete' ~/userbots.sql
 
 # 3. Role, a fresh database owned by it, close the other databases
 docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
@@ -364,6 +371,12 @@ docker compose logs --tail 50 userbots        # no database errors
 - Step 4 connects over the container's local socket, which the Postgres image trusts, so no password is asked.
 - Step 5 replaces maubot's generated `unshared_secret` (as in 7.2); the admin bot logs in again by itself.
 - The new `USERBOTS_DB_PASSWORD` line in `docker-compose.yml` only matters for a fresh Postgres volume. There is no need to recreate the `postgres` container now; the next `docker compose up -d` restarts it briefly, which is harmless.
+- **If step 4 fails** (e.g. the dump file was wrong after step 3 already dropped the database), restore the backup copy into the new database as the new role, then continue with step 5. Don't run `backup.sh` before that unless you made the copy above: it would replace the only good backup.
+
+  ```bash
+  tar -xOf ~/before-i12.tar ./userbots.dump | docker compose exec -T postgres \
+    pg_restore -U "$POSTGRES_USER" -d userbots --no-owner --no-privileges --role=userbots
+  ```
 
 **Check:**
 
@@ -385,8 +398,8 @@ In Matrix: `!bot list` and `!bot info <bot>` show the bots running. Saving the a
 **Then:**
 
 ```bash
-shred -u ~/userbots.sql       # contains the bots' access tokens
-./backup.sh
+bash ./backup.sh
+shred -u ~/userbots.sql ~/before-i12.tar     # both contain the bots' access tokens
 ```
 
 If plugins you don't trust have ever run with the old setup, also change `POSTGRES_PASSWORD` (Synapse and the main maubot use it). On a closed system with only your own test plugins that is not needed.
@@ -399,6 +412,9 @@ What remains: `userbots/config.yaml` also holds `USERBOTS_ADMIN_PASSWORD`, so a 
 |---|---|---|
 | `!whoami` gets no answer | `admins` holds a localpart instead of the full Matrix ID | `- "@name:matrix.dmi.unibas.ch"` (quoted), see 5.7 |
 | `git pull`: `unable to unlink old 'server/userbots/config.yaml.template': Permission denied` | `setup.sh` (and the container) give `server/maubot/` and `server/userbots/` to uid 1337, and the templates live inside them | `sudo chown "$(id -u):$(id -g)" server/maubot server/userbots server/*/config.yaml.template`, then `git status` (restore a half-updated file with `git checkout -- <file>`) and `git pull` again. `setup.sh` hands the folders back to 1337. |
+| `sudo ./backup.sh`: `cannot execute: Permission denied` | `backup.sh` and `restore.sh` are mode 644 in git | `bash ./backup.sh` (in a root shell, see the next row) |
+| `.env: Permission denied` | `.env` is readable by its owner only (600) | run the steps in a root shell (`sudo -i`); `git pull` stays a step for your own user (as root, git refuses: "dubious ownership") |
+| Restoring a dump fails at its first line (e.g. `syntax error at or near ...`) | the file holds an error message instead of a dump, e.g. after a typo in the `pg_dump` command | check dumps before using them (§8 step 2); restore from the backup tar (§8, "If step 4 fails") |
 | `backup.sh`: database "userbots" does not exist | old `backup.sh` | pull; the current one skips userbots until the database exists |
 | Login test (7.3) gives 401 | `.env` not loaded in your shell (`echo ${#USERBOTS_ADMIN_PASSWORD}` must print 64), or `userbots/config.yaml` rendered before the variable existed | `./setup.sh && docker compose restart userbots`. `sudo grep -A2 '^admins:' userbots/config.yaml` must show `adminbot: $2b$...` (maubot hashes the password at startup). |
 | userbots keeps restarting | database `userbots` missing | 7.2 step 3 |
