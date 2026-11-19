@@ -65,6 +65,18 @@ docker exec -it matrix-maubot /usr/bin/python3 -m maubot.cli auth --update-clien
 
 Fill in the homeserver (`matrix.dmi.unibas.ch`), and fill in the username and password for the bot. The `--update-client` flag will automatically create the client in the maubot web-ui. If that is not the case, follow the manual client creation step below.
 
+### Mark the account as a bot
+
+The server requires every user to agree to the Terms and Conditions (`user_consent` in `homeserver.yaml.template`). Until they do, Synapse refuses their messages, so a new bot can't send anything. Accounts with the user type `bot` are exempt, independent of the terms version. Set it once per bot account, on the VM, with the access token of a server admin (Element: Settings → Help & About → Access token):
+
+```bash
+curl -X PUT -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" -H "Content-Type: application/json" \
+  -d '{"user_type": "bot"}' \
+  "http://127.0.0.1:8008/_synapse/admin/v2/users/@<bot>:matrix.dmi.unibas.ch"
+```
+
+The response must contain `"user_type": "bot"`. `8008` is `SYNAPSE_HTTP_PORT` from `.env`. The admin bot (plugin 0.3.2 and later) does this for its own account at startup and for professor bots, so it's only needed for bots you set up by hand here.
+
 ### Creating the client -- OPTIONAL IN CASE OF ISSUES
 
 Take note of the access token and device ID returned to you by the last command.

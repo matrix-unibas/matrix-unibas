@@ -162,6 +162,8 @@ No file changes. This follows [maubot.md](maubot.md), with these specifics:
 
 The bot sets its own Synapse rate-limit exemption at startup, so no manual step is needed for that.
 
+It also marks its own account as a bot (`user_type: bot`, plugin 0.3.2 and later). Bot accounts don't have to agree to the Terms and Conditions (`user_consent` in `homeserver.yaml.template`), which would otherwise block every message the bot sends. If the startup check `bot_type` fails, set it by hand ([maubot.md](maubot.md), "Mark the account as a bot"). Professor bots are created with that type, and accounts that get reused are given it, so they're exempt too.
+
 ## 6. Switch off open registration (after Phase 3)
 
 Only once signup links work on production. Until then, Ketesa registration tokens are the stopgap for staff and testers.
@@ -292,9 +294,13 @@ Test with a **non-admin** professor. Requests from admins are approved automatic
 | Task | How |
 |---|---|
 | Pending requests | posted to the audit room; `!admin bots pending`, `approve <id>`, `reject <id> [reason]` |
-| Stop all professor bots now | `!admin bots disable-all` |
+| See all professor bots | `!bot list` (as admin: every bot; `!bot list @owner:server` for one person) |
+| Manage one bot | `!bot info\|stop\|start\|config\|delete <bot>`: the bot's name, `@owner:server <name>`, or its account `@bot.<owner>.<name>:server` (plugin 0.3.1) |
+| Stop all professor bots now | `!admin bots disable-all` (they stay set up) |
+| Delete all professor bots | `!bot delete all` (or `all @owner:server`), then `!confirm`; deactivates every bot account, never the admin bot |
 | Switch the feature off | `user_bots.enabled: false` in the admin bot config; bot commands are refused |
-| Logs | `docker compose logs -f userbots` (there is no UI for this maubot) |
+| Logs | `docker compose logs -f userbots` |
+| Look into userbots directly (debugging only) | It has no published port. Tunnel to the container: `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' matrix-userbots` on the VM, then `ssh -L 29317:<ip>:29316 <vm>` and open `http://localhost:29317/_matrix/maubot/` (user `adminbot`, `$USERBOTS_ADMIN_PASSWORD`). Don't create, change or delete bots there: the admin bot's DB wouldn't know, and deleted bots' accounts would stay active. |
 | maubot update | change `MAUBOT_IMAGE_TAG`, `./setup.sh`; both maubots move together |
 
 Remaining risk: professor bots share one process with each other, so a malicious plugin could read another professor bot's token. Those are unprivileged accounts. Approval, the quota and the kill switch are the mitigations.
