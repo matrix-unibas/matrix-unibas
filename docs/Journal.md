@@ -331,3 +331,62 @@ Attempted to set up LiveKit as the WebRTC SFU for native MatrixRTC group calls a
 - Monitor LiveKit container logs and ICE connectivity under different network conditions (VPN, Eduroam, external).
 
 !!!!! calls not working any more idk why!!!!
+
+
+## 19.11.2026 - nkl, cj, vs
+
+Main goal of the day was to reset the server to a clean state, for a clean demo next Tuesday and tidy up a few loose ends. Simultaneously catching any possible errors in our setup process.
+We also wanted to re-check and improve the admin bot.
+
+### Server reset
+We started by disabling the account registration through synapse. The element client however has no setting to completely remove the path, it now still shows up on the login screen, but the option is disabled and explains, that the server does not support it. User accounts get created manually through the Ketesa UI (or through docker commands for the first admin account) or with invite/signup commands to the Admin bot.
+We started by stopping the server and resetting the data. However at first we forgot about a postres volume, causing issues with the synapse startup. After we fixed this, everything worked.
+Further we also tried updating nginx, due to a current critical vulnerability. However on ITS hardware ALIS overwrites our apt sources, making this impossible. We assume ITS will deal with the patching.
+
+We then created one global admin user, to avoid confusion from now on.
+
+After the server was set up, we installed the admin-bot again, this time renaming it to ADMIN, to make its functionality clear.
+
+### Admin-bot review & improvements:
+
+Next we tackled the admin-bot review and after finding a major security flaw also revisited the matrix-unibas configuration once more:
+
+Admin bot 1.1.0 (admin-bot, plus infra commits in matrix-unibas)
+- Bot accounts as user_type: bot (68077f4): the admin bot and professor bots are exempt from the terms-and-conditions check (user_consent), which had silently blocked their messages.
+- Welcome DM couldn't be decrypted:
+  - Cause: the bot sends into the new DM while the user is only invited. Without a loaded member list, mautrix shares the room key only with joined members, and it doesn't share it again when the invitee joins.
+  - Fix: load the full member list before sending (open_dm).
+  - Already broken DMs only recover when mautrix rotates the key (7 days or 100 messages).
+- !help decluttered: one line per command, subcommands listed by name only. Details via !help <command> [<sub>]. Reason: the overview had become too long to be useful.
+- People are told about changes others make: new or removed professor/TA role, and admin changes to their course (rooms, archive, rollover) or bots (start, stop, config, delete, disable-all). These go through the held notices, so they're readable even without a device yet.
+- Reset code vs. recovery key explained, and saving the code enforced:
+  - Reset code (ours) = gets you back into the account. Element's recovery key = reads your messages. Users need both.
+  - The signup and /recover pages now make users type the code back in (step 2), with "show me a new code" as the way out.
+  - Security review fix: the page token keeps a fixed one-hour lifetime and is tied to the current code, so a stale page can't produce new codes.
+- Re-created professor bots were unverified:
+  - Cause: Synapse deletes all account data on deactivation (including the encrypted cross-signing keys behind our stored recovery key) but keeps the public keys. The stored recovery key was then useless (No default key ID set).
+  - Decision: lock instead of deactivate on !bot delete. The bot is renamed "… – removed" (every room sees it), its devices are deleted, the account is locked, and the owner gets the list of rooms it's still in.
+  - On re-create: unlock, same ID, same identity, verified, and back in its rooms.
+  - Rejected alternatives:
+    - new account IDs (a suffix in the ID)
+    - backing up the encrypted key data (amounts to storing private keys)
+    - logging in as the bot to leave its rooms (attack surface)
+    - leaving bots in rooms without any notice (silent dead bots)
+  - Matrix can't truly delete an account: user IDs stay reserved forever, by design.
+- Own-account guard: the bot manager only resets, logs in to, locks or deactivates @bot.* accounts it created itself (table bot_account). Before, !bot create would have taken over any existing @bot.… account, e.g. one registered by someone through open token registration.
+- Approval aids:
+  - Only reviewable packages: no compiled files or archives.
+  - The request shows a package summary and a static check (exec, subprocess, native code, maubot internals, hiding tricks, …).
+  - Updates show changes against the running version and mark new findings.
+  - !admin bots show <id> sends the package, the diff and all findings.
+  - Decision: approval stays on by default but can be switched off in the config. Professors are trusted and admins won't read every plugin, so approval mostly means a person decided and the audit log records it. The static check is an aid, not a guarantee.
+- Version 1.0.0 → 1.1.0; 187 tests.
+
+Infra (matrix-unibas)
+- Security hole found: the userbots maubot used the Postgres superuser.
+  - A professor plugin could have read Synapse's database (all tokens), the admin bot's server-admin token, and run commands in the Postgres container. This undid the separation the second maubot exists for.
+  - Fix: own role userbots owning only its database, and CONNECT revoked on the other databases.
+  - The rollout for the running server is in admin-bot-setup.md §8, rehearsed on a copy of the current state.
+  - Decision: roll it out before professors upload bots.
+- Docs: marking bot accounts as bots, admins managing all professor bots.
+- Found during the rollout: git pull on the server breaks whenever a maubot config template changes, because the maubot container takes ownership of its whole /data folder on every start, and the templates live inside it. Proposed: move the templates out.
