@@ -28,6 +28,7 @@ homeserver.yaml
 **/admin/config.json
 **/maubot/config.yaml
 **/coturn/turnserver.conf
+**/livekit/livekit.yaml
 !*.template
 
 # --- Maubot runtime state ----------------------------------------------------
@@ -37,6 +38,8 @@ homeserver.yaml
 **/userbots/config.yaml
 **/userbots/plugins/
 **/userbots/trash/
+# mbc login (holds a maubot admin token)
+**/maubot-cli.json
 *.mbp
 *.db
 *.db-journal

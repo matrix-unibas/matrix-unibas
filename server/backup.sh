@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+# The backup holds Synapse's signing key and every access token and password hash: root only.
+# (Restoring runs as root anyway, since .env is readable by its owner only.)
+umask 077
+
 cd "$(dirname "$0")"
 
 ENV_FILE=".env"
@@ -17,6 +21,7 @@ fi
 set -a; source "$ENV_FILE"; set +a
 
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"   # also covers backups made before the umask
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 STAGE_DIR="$BACKUP_DIR/.staging_$TIMESTAMP"
